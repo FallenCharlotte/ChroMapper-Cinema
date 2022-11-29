@@ -62,6 +62,7 @@
   <ItemGroup>
     <Compile Include="Plugin.cs" />
     <Compile Include="Cinema.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Resources\Icon.png" />
