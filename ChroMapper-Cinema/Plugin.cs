@@ -19,8 +19,8 @@ public class Plugin {
 	private void SceneLoaded(Scene scene, LoadSceneMode mode) {
 		if (scene.buildIndex == 3) {
 			// Map Edit
-			var mapEditorUI = Object.FindObjectOfType<MapEditorUI>();
-			ui.AddWindow(mapEditorUI);
+			var parent = GameObject.Find("Editor/Rotating");
+			ui.AddWindow(parent);
 		}
 	}
 	
