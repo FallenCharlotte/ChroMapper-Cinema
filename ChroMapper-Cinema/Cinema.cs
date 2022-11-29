@@ -1,4 +1,5 @@
 using System.IO;
+using System.Reflection;
 using UnityEngine;
 using UnityEngine.Video;
 using SimpleJSON;
@@ -6,7 +7,7 @@ using SimpleJSON;
 namespace ChroMapper_Cinema {
 
 public class Cinema {
-	//public ExtensionButton main_button;
+	public ExtensionButton main_button;
 	private AudioTimeSyncController atsc;
 	
 	private bool enabled;
@@ -18,36 +19,20 @@ public class Cinema {
 	private bool playing;
 	
 	public Cinema() {
-		/*
 		main_button = ExtensionButtons.AddButton(
 			LoadSprite("ChroMapper_Cinema.Resources.Icon.png"),
 			"Cinema",
-			ToggleWindow);
-			* */
+			ToggleEnabled);
 	}
 	
 	public void Init(AudioTimeSyncController atsc) {
 		this.atsc = atsc;
-		
-		var map_dir = BeatSaberSongContainer.Instance.Song.Directory;
-		var cinema_file = Path.Combine(map_dir, "cinema-video.json");
-		if (!File.Exists(cinema_file)) {
-			enabled = false;
-			return;
-		}
-		
-		StreamReader reader = new StreamReader(cinema_file);
-		var cinema_info = (JSONObject)JSONNode.Parse(reader.ReadToEnd());
-		reader.Close();
-		
-		offset = ((int)cinema_info["offset"]) / 1000.0f;
 		
 		screen = new GameObject("Cinema Screen");
 		if (parent) {
 			screen.transform.SetParent(parent.transform);
 		}
 		SetTransform(screen, V3(0, 16, 48), V3(16, 9, 1));
-		
 		
 		var mesh = new Mesh();
 		mesh.name = "Scripted_Plane_New_Mesh";
@@ -70,16 +55,49 @@ public class Cinema {
 			Debug.Log("Cinema prepared: " + (p.isPrepared ? "true" : "false"));
 			enabled = true;
 			playing = false;
-			p.StepForward();
+			Update();
 		};
 		player.seekCompleted += AfterSeek;
 		player.playOnAwake = true;
 		player.audioOutputMode = VideoAudioOutputMode.None;
-		player.url = Path.Combine(map_dir, (string)cinema_info["videoFile"]);
-		player.Prepare();
+		
+		LoadVideo();
 		
 		atsc.TimeChanged += Update;
 		Settings.NotifyBySettingName("SongSpeed", UpdateSongSpeed);
+	}
+	
+	public void LoadVideo() {
+		var map_dir = BeatSaberSongContainer.Instance.Song.Directory;
+		var cinema_file = Path.Combine(map_dir, "cinema-video.json");
+		if (!File.Exists(cinema_file)) {
+			screen.SetActive(false);
+			enabled = false;
+			Debug.Log("No cinema-video.json!");
+			return;
+		}
+		
+		screen.SetActive(true);
+		
+		StreamReader reader = new StreamReader(cinema_file);
+		var cinema_info = (JSONObject)JSONNode.Parse(reader.ReadToEnd());
+		reader.Close();
+		
+		offset = ((int)cinema_info["offset"]) / 1000.0f;
+		
+		player.url = Path.Combine(map_dir, (string)cinema_info["videoFile"]);
+		player.Prepare();
+	}
+	
+	public void ToggleEnabled() {
+		if (enabled) {
+			player.Stop();
+			screen.SetActive(false);
+			enabled = false;
+		}
+		else {
+			LoadVideo();
+		}
 	}
 	
 	public void UpatePlatform(GameObject parent) {
@@ -124,6 +142,17 @@ public class Cinema {
 	}
 	
 	// Unity helpers
+	
+	private Sprite LoadSprite(string asset) {
+		Stream stream = Assembly.GetExecutingAssembly().GetManifestResourceStream(asset);
+		byte[] data = new byte[stream.Length];
+		stream.Read(data, 0, (int)stream.Length);
+		
+		Texture2D texture2D = new Texture2D(256, 256);
+		texture2D.LoadImage(data);
+		
+		return Sprite.Create(texture2D, new Rect(0, 0, texture2D.width, texture2D.height), new Vector2(0, 0), 100.0f);
+	}
 	
 	private Transform SetTransform(GameObject obj, Vector3 pos, Vector3 scale)
 	{
