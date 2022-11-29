@@ -10,6 +10,7 @@ public class Cinema {
 	private AudioTimeSyncController atsc;
 	
 	private bool enabled;
+	private GameObject parent;
 	private GameObject screen;
 	private VideoPlayer player;
 	
@@ -25,7 +26,7 @@ public class Cinema {
 			* */
 	}
 	
-	public void Init(GameObject parent, AudioTimeSyncController atsc) {
+	public void Init(AudioTimeSyncController atsc) {
 		this.atsc = atsc;
 		
 		var map_dir = BeatSaberSongContainer.Instance.Song.Directory;
@@ -41,7 +42,10 @@ public class Cinema {
 		
 		offset = ((int)cinema_info["offset"]) / 1000.0f;
 		
-		screen = AddChild(parent, "Cinema Screen");
+		screen = new GameObject("Cinema Screen");
+		if (parent) {
+			screen.transform.SetParent(parent.transform);
+		}
 		SetTransform(screen, V3(0, 16, 48), V3(16, 9, 1));
 		
 		
@@ -77,6 +81,14 @@ public class Cinema {
 		Settings.NotifyBySettingName("SongSpeed", UpdateSongSpeed);
 	}
 	
+	public void UpatePlatform(GameObject parent) {
+		this.parent = parent;
+		
+		if (screen) {
+			screen.transform.SetParent(parent.transform);
+		}
+	}
+	
 	private void Update() {
 		if (!enabled) return;
 		
@@ -105,12 +117,6 @@ public class Cinema {
 	}
 	
 	// Unity helpers
-	
-	private GameObject AddChild(GameObject parent, string name, params System.Type[] components) {
-		var obj = new GameObject(name, components);
-		obj.transform.SetParent(parent.transform);
-		return obj;
-	}
 	
 	private Transform SetTransform(GameObject obj, Vector3 pos, Vector3 scale)
 	{

@@ -12,16 +12,21 @@ public class Plugin {
 		Debug.Log("Cinema Plugin has loaded!");
 		SceneManager.sceneLoaded += SceneLoaded;
 		controller = new Cinema();
+		
+		LoadInitialMap.PlatformLoadedEvent += PlatformLoaded;
 	}
 	
 	private void SceneLoaded(Scene scene, LoadSceneMode mode) {
 		if (scene.buildIndex == 3) {
 			// Map Edit
-			var parent = GameObject.Find("Editor/Rotating");
 			var atsc = BeatmapObjectContainerCollection.GetCollectionForType(BeatmapObject.ObjectType.Note).AudioTimeSyncController;
 			
-			controller.Init(parent, atsc);
+			controller.Init(atsc);
 		}
+	}
+	
+	private void PlatformLoaded(PlatformDescriptor descriptor) {
+		controller.UpatePlatform(descriptor.gameObject);
 	}
 	
 	[Exit]
