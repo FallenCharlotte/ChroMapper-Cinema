@@ -3,17 +3,20 @@ using UnityEngine;
 using UnityEngine.Video;
 using SimpleJSON;
 
-namespace ChroMapper_Cinema.UserInterface {
+namespace ChroMapper_Cinema {
 
-public class UI {
+public class Cinema {
 	//public ExtensionButton main_button;
+	private AudioTimeSyncController atsc;
+	
 	private bool enabled;
 	private GameObject screen;
 	private VideoPlayer player;
 	
 	private float offset;
+	private bool playing;
 	
-	public UI() {
+	public Cinema() {
 		/*
 		main_button = ExtensionButtons.AddButton(
 			LoadSprite("ChroMapper_Cinema.Resources.Icon.png"),
@@ -22,7 +25,9 @@ public class UI {
 			* */
 	}
 	
-	public void AddWindow(GameObject parent) {
+	public void Init(GameObject parent, AudioTimeSyncController atsc) {
+		this.atsc = atsc;
+		
 		var map_dir = BeatSaberSongContainer.Instance.Song.Directory;
 		var cinema_file = Path.Combine(map_dir, "cinema-video.json");
 		if (!File.Exists(cinema_file)) {
@@ -60,17 +65,46 @@ public class UI {
 		player.prepareCompleted += (VideoPlayer p) => {
 			Debug.Log("Cinema prepared: " + (p.isPrepared ? "true" : "false"));
 			enabled = true;
-			p.Play();
-			Debug.Log(offset);
+			playing = false;
 		};
 		player.playOnAwake = false;
 		player.audioOutputMode = VideoAudioOutputMode.None;
 		player.url = Path.Combine(map_dir, (string)cinema_info["videoFile"]);
 		player.isLooping = true;
 		player.Prepare();
+		
+		atsc.TimeChanged += Update;
+		Settings.NotifyBySettingName("SongSpeed", UpdateSongSpeed);
 	}
 	
+	private void Update() {
+		if (!enabled) return;
+		
+		var time = atsc.CurrentSeconds + offset;
+		
+		// Causes lag when playing
+		if (!playing) {
+			player.time = time;
+		}
+		
+		if (atsc.IsPlaying && !playing && time >= 0) {
+			player.Play();
+			playing = true;
+		}
+		
+		if (!atsc.IsPlaying && playing) {
+			player.Pause();
+			playing = false;
+		}
+	}
 	
+	private void UpdateSongSpeed(object obj) {
+		if (!enabled) return;
+		
+		player.playbackSpeed = ((float)obj) / 10.0f;
+	}
+	
+	// Unity helpers
 	
 	private GameObject AddChild(GameObject parent, string name, params System.Type[] components) {
 		var obj = new GameObject(name, components);

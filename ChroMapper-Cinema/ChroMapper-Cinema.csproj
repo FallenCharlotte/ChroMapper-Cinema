@@ -54,7 +54,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Plugin.cs" />
-    <Compile Include="UserInterface\UI.cs" />
+    <Compile Include="Cinema.cs" />
   </ItemGroup>
   <ItemGroup>
     <!--<EmbeddedResource Include="Resources\Icon.png" />-->
