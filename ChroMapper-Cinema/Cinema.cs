@@ -70,11 +70,12 @@ public class Cinema {
 			Debug.Log("Cinema prepared: " + (p.isPrepared ? "true" : "false"));
 			enabled = true;
 			playing = false;
+			p.StepForward();
 		};
-		player.playOnAwake = false;
+		player.seekCompleted += AfterSeek;
+		player.playOnAwake = true;
 		player.audioOutputMode = VideoAudioOutputMode.None;
 		player.url = Path.Combine(map_dir, (string)cinema_info["videoFile"]);
-		player.isLooping = true;
 		player.Prepare();
 		
 		atsc.TimeChanged += Update;
@@ -114,6 +115,12 @@ public class Cinema {
 		if (!enabled) return;
 		
 		player.playbackSpeed = ((float)obj) / 10.0f;
+	}
+	
+	private void AfterSeek(VideoPlayer player) {
+		if (!playing) {
+			player.StepForward();
+		}
 	}
 	
 	// Unity helpers
