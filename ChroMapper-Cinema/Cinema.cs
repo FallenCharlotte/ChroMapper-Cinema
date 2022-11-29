@@ -67,14 +67,14 @@ public class Cinema {
 		Settings.NotifyBySettingName("SongSpeed", UpdateSongSpeed);
 	}
 	
-	public void LoadVideo() {
+	public bool LoadVideo() {
 		var map_dir = BeatSaberSongContainer.Instance.Song.Directory;
 		var cinema_file = Path.Combine(map_dir, "cinema-video.json");
 		if (!File.Exists(cinema_file)) {
 			screen.SetActive(false);
 			enabled = false;
 			Debug.Log("No cinema-video.json!");
-			return;
+			return false;
 		}
 		
 		screen.SetActive(true);
@@ -87,6 +87,8 @@ public class Cinema {
 		
 		player.url = Path.Combine(map_dir, (string)cinema_info["videoFile"]);
 		player.Prepare();
+		
+		return true;
 	}
 	
 	public void ToggleEnabled() {
@@ -96,7 +98,9 @@ public class Cinema {
 			enabled = false;
 		}
 		else {
-			LoadVideo();
+			if (!LoadVideo()) {
+				PersistentUI.Instance.ShowDialogBox("No cinema-video.json!", null, PersistentUI.DialogBoxPresetType.Ok);
+			}
 		}
 	}
 	

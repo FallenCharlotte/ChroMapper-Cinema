@@ -38,6 +38,10 @@
     <Reference Include="UnityEngine.ImageConversionModule">
       <HintPath>$(ChroMapperDir)\ChroMapper_Data\Managed\UnityEngine.ImageConversionModule.dll</HintPath>
     </Reference>
+    <Reference Include="Unity.TextMeshPro">
+      <HintPath>$(ChroMapperDir)\ChroMapper_Data\Managed\Unity.TextMeshPro.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
     <Reference Include="UnityEngine.UI">
       <HintPath>$(ChroMapperDir)\ChroMapper_Data\Managed\UnityEngine.VideoModule.dll</HintPath>
       <Private>False</Private>
