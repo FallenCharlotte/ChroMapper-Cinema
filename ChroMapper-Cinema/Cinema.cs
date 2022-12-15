@@ -67,14 +67,13 @@ public class Cinema {
 		Settings.NotifyBySettingName("SongSpeed", UpdateSongSpeed);
 	}
 	
-	public bool LoadVideo() {
+	public string LoadVideo() {
 		var map_dir = BeatSaberSongContainer.Instance.Song.Directory;
 		var cinema_file = Path.Combine(map_dir, "cinema-video.json");
 		if (!File.Exists(cinema_file)) {
 			screen.SetActive(false);
 			enabled = false;
-			Debug.Log("No cinema-video.json!");
-			return false;
+			return Error("No cinema-video.json!");
 		}
 		
 		screen.SetActive(true);
@@ -85,10 +84,22 @@ public class Cinema {
 		
 		offset = ((int)cinema_info["offset"]) / 1000.0f;
 		
-		player.url = Path.Combine(map_dir, (string)cinema_info["videoFile"]);
+		var mapFolderName = new DirectoryInfo(map_dir).Name;
+		var wipDir = Directory.GetParent(map_dir).FullName;
+		var videoPath = Path.Combine(wipDir, "CinemaWIPVideos", mapFolderName, (string)cinema_info["videoFile"]);
+		
+		if (!File.Exists(videoPath)) {
+			videoPath = Path.Combine(map_dir, (string)cinema_info["videoFile"]);
+		}
+		
+		if (!File.Exists(videoPath)) {
+			return Error("Video file not downloaded!");
+		}
+		
+		player.url = videoPath;
 		player.Prepare();
 		
-		return true;
+		return "";
 	}
 	
 	public void ToggleEnabled() {
@@ -98,8 +109,9 @@ public class Cinema {
 			enabled = false;
 		}
 		else {
-			if (!LoadVideo()) {
-				PersistentUI.Instance.ShowDialogBox("No cinema-video.json!", null, PersistentUI.DialogBoxPresetType.Ok);
+			string err = LoadVideo();
+			if (err != "") {
+				PersistentUI.Instance.ShowDialogBox(err, null, PersistentUI.DialogBoxPresetType.Ok);
 			}
 		}
 	}
@@ -175,6 +187,11 @@ public class Cinema {
 	}
 	private Vector3 V3(float x, float y, float z) {
 		return new Vector3(x, y, z);
+	}
+	
+	private string Error(string msg) {
+		Debug.Log(msg);
+		return msg;
 	}
 }
 
