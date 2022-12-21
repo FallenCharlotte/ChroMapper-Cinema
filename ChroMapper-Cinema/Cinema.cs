@@ -14,30 +14,33 @@ public class Cinema {
 	private GameObject parent;
 	private GameObject screen;
 	private VideoPlayer player;
+	private string platform = Options.default_key;
+	private PlatformSettings plat_settings;
 	
 	private float offset;
 	private bool playing;
 	
 	public Cinema() {
 		main_button = ExtensionButtons.AddButton(
-			LoadSprite("ChroMapper_Cinema.Resources.Icon.png"),
+			Utils.LoadSprite("ChroMapper_Cinema.Resources.Icon.png"),
 			"Cinema",
 			ToggleEnabled);
 	}
 	
-	public void Init(AudioTimeSyncController atsc) {
+	public void Init(AudioTimeSyncController atsc, GameObject platform) {
+		this.parent = platform;
 		this.atsc = atsc;
 		
+		this.platform = platform.name.Replace("(Clone)", "");
+		Debug.Log($"Platform: {this.platform}");
+		
 		screen = new GameObject("Cinema Screen");
-		if (parent) {
-			screen.transform.SetParent(parent.transform);
-		}
-		SetTransform(screen, V3(0, 16, 48), V3(16, 9, 1));
+		screen.transform.SetParent(parent.transform);
 		
 		var mesh = new Mesh();
 		mesh.name = "Scripted_Plane_New_Mesh";
-		mesh.vertices = new Vector3[] { V3(-1, -1, 0.01f), V3(1, -1, 0.01f), V3(1, 1, 0.01f), V3(-1, 1, 0.01f) };
-		mesh.uv = new Vector2[] { V2(0, 0), V2(1, 0), V2(1, 1), V2(0, 1) };
+		mesh.vertices = new Vector3[] { Utils.V3(-1, -1, 0.01f), Utils.V3(1, -1, 0.01f), Utils.V3(1, 1, 0.01f), Utils.V3(-1, 1, 0.01f) };
+		mesh.uv = new Vector2[] { Utils.V2(0, 0), Utils.V2(1, 0), Utils.V2(1, 1), Utils.V2(0, 1) };
 		mesh.triangles = new int[] { 2, 1, 0, 3, 2, 0 };
 		mesh.RecalculateNormals();
 		screen.AddComponent<MeshFilter>().mesh = mesh;
@@ -52,9 +55,13 @@ public class Cinema {
 			throw new System.Exception(msg);
 		};
 		player.prepareCompleted += (VideoPlayer p) => {
+			var scale = new Vector2(plat_settings.height / p.height * p.width, plat_settings.height);
+			Utils.SetTransform(screen, plat_settings.pos, scale, plat_settings.rotation);
 			Debug.Log("Cinema prepared: " + (p.isPrepared ? "true" : "false"));
 			enabled = true;
 			playing = false;
+			
+			screen.SetActive(true);
 			Update();
 		};
 		player.seekCompleted += AfterSeek;
@@ -73,14 +80,25 @@ public class Cinema {
 		if (!File.Exists(cinema_file)) {
 			screen.SetActive(false);
 			enabled = false;
-			return Error("No cinema-video.json!");
+			return Utils.Error("No cinema-video.json!");
 		}
 		
-		screen.SetActive(true);
-		
 		StreamReader reader = new StreamReader(cinema_file);
-		var cinema_info = (JSONObject)JSONNode.Parse(reader.ReadToEnd());
+		var cinema_info = JSONNode.Parse(reader.ReadToEnd()).AsObject;
 		reader.Close();
+		
+		Options.instance.LoadSettings();
+		plat_settings = Options.instance.GetPlatformSettings(platform);
+		if (cinema_info.HasKey("screenPosition")) {
+			plat_settings.pos = Utils.JSONV3(cinema_info["screenPosition"].AsObject);
+		}
+		if (cinema_info.HasKey("screenRotation")) {
+			plat_settings.rotation = Utils.JSONV3(cinema_info["screenRotation"].AsObject);
+		}
+		if (cinema_info.HasKey("screenHeight")) {
+			plat_settings.height = cinema_info["screenHeight"].AsFloat;
+		}
+		plat_settings.pos.y += plat_settings.height / 2;
 		
 		offset = ((int)cinema_info["offset"]) / 1000.0f;
 		
@@ -93,7 +111,7 @@ public class Cinema {
 		}
 		
 		if (!File.Exists(videoPath)) {
-			return Error("Video file not downloaded!");
+			return Utils.Error("Video file not downloaded!");
 		}
 		
 		player.url = videoPath;
@@ -113,14 +131,6 @@ public class Cinema {
 			if (err != "") {
 				PersistentUI.Instance.ShowDialogBox(err, null, PersistentUI.DialogBoxPresetType.Ok);
 			}
-		}
-	}
-	
-	public void UpatePlatform(GameObject parent) {
-		this.parent = parent;
-		
-		if (screen) {
-			screen.transform.SetParent(parent.transform);
 		}
 	}
 	
@@ -155,43 +165,6 @@ public class Cinema {
 		if (!playing) {
 			player.StepForward();
 		}
-	}
-	
-	// Unity helpers
-	
-	private Sprite LoadSprite(string asset) {
-		Stream stream = Assembly.GetExecutingAssembly().GetManifestResourceStream(asset);
-		byte[] data = new byte[stream.Length];
-		stream.Read(data, 0, (int)stream.Length);
-		
-		Texture2D texture2D = new Texture2D(256, 256);
-		texture2D.LoadImage(data);
-		
-		return Sprite.Create(texture2D, new Rect(0, 0, texture2D.width, texture2D.height), new Vector2(0, 0), 100.0f);
-	}
-	
-	private Transform SetTransform(GameObject obj, Vector3 pos, Vector3 scale)
-	{
-		var trans = obj.GetComponent<Transform>();
-		if (trans == null) {
-			trans = obj.AddComponent<Transform>();
-		}
-		trans.localPosition = pos;
-		trans.localScale = scale;
-		
-		return trans;
-	}
-	
-	private Vector2 V2(float x, float y) {
-		return new Vector2(x, y);
-	}
-	private Vector3 V3(float x, float y, float z) {
-		return new Vector3(x, y, z);
-	}
-	
-	private string Error(string msg) {
-		Debug.Log(msg);
-		return msg;
 	}
 }
 

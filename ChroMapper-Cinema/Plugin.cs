@@ -10,23 +10,14 @@ public class Plugin {
 	[Init]
 	private void Init() {
 		Debug.Log("Cinema Plugin has loaded!");
-		SceneManager.sceneLoaded += SceneLoaded;
 		controller = new Cinema();
 		
 		LoadInitialMap.PlatformLoadedEvent += PlatformLoaded;
 	}
 	
-	private void SceneLoaded(Scene scene, LoadSceneMode mode) {
-		if (scene.buildIndex == 3) {
-			// Map Edit
-			var atsc = BeatmapObjectContainerCollection.GetCollectionForType(BeatmapObject.ObjectType.Note).AudioTimeSyncController;
-			
-			controller.Init(atsc);
-		}
-	}
-	
 	private void PlatformLoaded(PlatformDescriptor descriptor) {
-		controller.UpatePlatform(descriptor.gameObject);
+		var atsc = BeatmapObjectContainerCollection.GetCollectionForType(BeatmapObject.ObjectType.Note).AudioTimeSyncController;
+		controller.Init(atsc, descriptor.gameObject);
 	}
 	
 	[Exit]

@@ -62,6 +62,8 @@
   <ItemGroup>
     <Compile Include="Plugin.cs" />
     <Compile Include="Cinema.cs" />
+    <Compile Include="Options.cs" />
+    <Compile Include="Utils.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
