@@ -52,6 +52,7 @@ public class Cinema {
 		player = screen.AddComponent<VideoPlayer>();
 		player.errorReceived += (VideoPlayer p, string msg) => {
 			enabled = false;
+			screen.SetActive(false);
 			throw new System.Exception(msg);
 		};
 		player.prepareCompleted += (VideoPlayer p) => {
@@ -61,7 +62,6 @@ public class Cinema {
 			enabled = true;
 			playing = false;
 			
-			screen.SetActive(true);
 			Update();
 		};
 		player.seekCompleted += AfterSeek;
@@ -113,6 +113,8 @@ public class Cinema {
 		if (!File.Exists(videoPath)) {
 			return Utils.Error("Video file not downloaded!");
 		}
+		
+		screen.SetActive(true);
 		
 		player.url = videoPath;
 		player.Prepare();
