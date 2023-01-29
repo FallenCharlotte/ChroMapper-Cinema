@@ -16,7 +16,7 @@ public class Plugin {
 	}
 	
 	private void PlatformLoaded(PlatformDescriptor descriptor) {
-		var atsc = BeatmapObjectContainerCollection.GetCollectionForType(BeatmapObject.ObjectType.Note).AudioTimeSyncController;
+		var atsc = BeatmapObjectContainerCollection.GetCollectionForType(Beatmap.Enums.ObjectType.Note).AudioTimeSyncController;
 		controller.Init(atsc, descriptor.gameObject);
 	}
 	
