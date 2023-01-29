@@ -39,7 +39,7 @@ public class Cinema {
 		
 		var mesh = new Mesh();
 		mesh.name = "Scripted_Plane_New_Mesh";
-		mesh.vertices = new Vector3[] { Utils.V3(-1, -1, 0.01f), Utils.V3(1, -1, 0.01f), Utils.V3(1, 1, 0.01f), Utils.V3(-1, 1, 0.01f) };
+		mesh.vertices = new Vector3[] { Utils.V3(-0.5f, -0.5f, 0.01f), Utils.V3(0.5f, -0.5f, 0.01f), Utils.V3(0.5f, 0.5f, 0.01f), Utils.V3(-0.5f, 0.5f, 0.01f) };
 		mesh.uv = new Vector2[] { Utils.V2(0, 0), Utils.V2(1, 0), Utils.V2(1, 1), Utils.V2(0, 1) };
 		mesh.triangles = new int[] { 2, 1, 0, 3, 2, 0 };
 		mesh.RecalculateNormals();
@@ -98,7 +98,6 @@ public class Cinema {
 		if (cinema_info.HasKey("screenHeight")) {
 			plat_settings.height = cinema_info["screenHeight"].AsFloat;
 		}
-		plat_settings.pos.y += plat_settings.height / 2;
 		
 		offset = ((int)cinema_info["offset"]) / 1000.0f;
 		
