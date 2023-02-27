@@ -36,6 +36,7 @@ public class Cinema {
 		
 		screen = new GameObject("Cinema Screen");
 		screen.transform.SetParent(parent.transform);
+		screen.SetActive(false);
 		
 		var mesh = new Mesh();
 		mesh.name = "Scripted_Plane_New_Mesh";
