@@ -58,7 +58,7 @@ public class Cinema {
 		};
 		player.prepareCompleted += (VideoPlayer p) => {
 			var scale = new Vector2(plat_settings.height / p.height * p.width, plat_settings.height);
-			Utils.SetTransform(screen, plat_settings.pos, scale, plat_settings.rotation);
+			Utils.SetTransform(screen, plat_settings.pos * 1.667f, scale * 1.667f, plat_settings.rotation);
 			Debug.Log("Cinema prepared: " + (p.isPrepared ? "true" : "false"));
 			enabled = true;
 			playing = false;
