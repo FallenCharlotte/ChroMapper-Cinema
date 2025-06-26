@@ -76,7 +76,11 @@ public class Cinema {
 	}
 	
 	public string LoadVideo() {
+#if CHROMPER_11
 		var map_dir = BeatSaberSongContainer.Instance.Song.Directory;
+#else
+		var map_dir = BeatSaberSongContainer.Instance.Info.Directory;
+#endif
 		var cinema_file = Path.Combine(map_dir, "cinema-video.json");
 		if (!File.Exists(cinema_file)) {
 			screen.SetActive(false);
