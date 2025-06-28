@@ -8,6 +8,10 @@ namespace ChroMapper_Cinema {
 
 public class Cinema {
 	public ExtensionButton main_button;
+	public JSONObject cinema_info = new JSONObject();
+	
+	internal object options_window = null;
+	
 	private AudioTimeSyncController atsc;
 	
 	private bool enabled;
@@ -21,10 +25,7 @@ public class Cinema {
 	private bool playing;
 	
 	public Cinema() {
-		main_button = ExtensionButtons.AddButton(
-			Utils.LoadSprite("ChroMapper_Cinema.Resources.Icon.png"),
-			"Cinema",
-			ToggleEnabled);
+		
 	}
 	
 	public void Init(AudioTimeSyncController atsc, GameObject platform) {
@@ -76,17 +77,8 @@ public class Cinema {
 	}
 	
 	public string LoadVideo() {
-		var map_dir = BeatSaberSongContainer.Instance.Info.Directory;
-		var cinema_file = Path.Combine(map_dir, "cinema-video.json");
-		if (!File.Exists(cinema_file)) {
-			screen.SetActive(false);
-			enabled = false;
-			return Utils.Error("No cinema-video.json!");
-		}
-		
-		StreamReader reader = new StreamReader(cinema_file);
-		var cinema_info = JSONNode.Parse(reader.ReadToEnd()).AsObject;
-		reader.Close();
+		var cinema_info = Plugin.map_config.cinema_video;
+		var map_dir = Plugin.map_config.map_dir;
 		
 		Options.instance.LoadSettings();
 		plat_settings = Options.instance.GetPlatformSettings(platform);
@@ -120,6 +112,23 @@ public class Cinema {
 		player.Prepare();
 		
 		return "";
+	}
+	
+	internal void MakeWindow(MapEditorUI mapEditorUI) {
+		options_window = OptionsWindow.InitProxy(mapEditorUI);
+	}
+	
+	public void ButtonPress() {
+		if (options_window != null) {
+			ToggleWindow();
+		}
+		else {
+			ToggleEnabled();
+		}
+	}
+	
+	internal void ToggleWindow() {
+		((OptionsWindow)options_window).ToggleWindow();
 	}
 	
 	public void ToggleEnabled() {

@@ -7,6 +7,9 @@
     <OutputType>Library</OutputType>
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
+  <PropertyGroup>
+    <LangVersion>9.0</LangVersion>
+  </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
     <DebugType>embedded</DebugType>
@@ -52,6 +55,9 @@
       <HintPath>$(ChroMapperDir)\ChroMapper_Data\Managed\0Harmony.dll</HintPath>
       <Private>False</Private>
     </Reference>
+    <Reference Include="ChroMapper-PropEdit">
+      <HintPath>$(ChroMapperDir)\Plugins\ChroMapper-PropEdit.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
@@ -64,7 +70,9 @@
   <ItemGroup>
     <Compile Include="Plugin.cs" />
     <Compile Include="Cinema.cs" />
+    <Compile Include="MapConfig.cs" />
     <Compile Include="Options.cs" />
+    <Compile Include="OptionsWindow.cs" />
     <Compile Include="Utils.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
