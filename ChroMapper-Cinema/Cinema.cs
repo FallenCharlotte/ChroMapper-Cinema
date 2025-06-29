@@ -7,17 +7,16 @@ using SimpleJSON;
 namespace ChroMapper_Cinema {
 
 public class Cinema {
-	public ExtensionButton main_button;
 	public JSONObject cinema_info = new JSONObject();
 	
-	internal object options_window = null;
+	internal object? options_window = null;
 	
-	private AudioTimeSyncController atsc;
+	private AudioTimeSyncController? atsc = null;
 	
-	private bool enabled;
-	private GameObject parent;
-	private GameObject screen;
-	private VideoPlayer player;
+	public bool enabled = false;
+	private GameObject? parent;
+	private GameObject? screen;
+	private VideoPlayer? player;
 	private string platform = Options.default_key;
 	private PlatformSettings plat_settings;
 	
@@ -55,6 +54,9 @@ public class Cinema {
 		player.errorReceived += (VideoPlayer p, string msg) => {
 			enabled = false;
 			screen.SetActive(false);
+			if (options_window != null) {
+				UpdateToggleButton();
+			}
 			throw new System.Exception(msg);
 		};
 		player.prepareCompleted += (VideoPlayer p) => {
@@ -63,6 +65,10 @@ public class Cinema {
 			Debug.Log("Cinema prepared: " + (p.isPrepared ? "true" : "false"));
 			enabled = true;
 			playing = false;
+			
+			if (options_window != null) {
+				UpdateToggleButton();
+			}
 			
 			Update();
 		};
@@ -77,7 +83,7 @@ public class Cinema {
 	}
 	
 	public string LoadVideo() {
-		var cinema_info = Plugin.map_config.cinema_video;
+		var cinema_info = Plugin.map_config!.cinema_video;
 		var map_dir = Plugin.map_config.map_dir;
 		
 		if (!Plugin.map_config.config_exists) {
@@ -111,10 +117,10 @@ public class Cinema {
 			return Utils.Error("Video file not downloaded!");
 		}
 		
-		screen.SetActive(true);
+		screen!.SetActive(true);
 		
-		player.url = videoPath;
-		player.Prepare();
+		player!.url = videoPath;
+		player!.Prepare();
 		
 		return "";
 	}
@@ -124,7 +130,7 @@ public class Cinema {
 	}
 	
 	public void ButtonPress() {
-		Plugin.map_config.Load();
+		Plugin.map_config!.Load();
 		if (options_window != null) {
 			ToggleWindow();
 		}
@@ -134,14 +140,17 @@ public class Cinema {
 	}
 	
 	internal void ToggleWindow() {
-		((OptionsWindow)options_window).ToggleWindow();
+		(options_window as OptionsWindow)!.ToggleWindow();
 	}
 	
 	public void ToggleEnabled() {
 		if (enabled) {
-			player.Stop();
-			screen.SetActive(false);
+			player!.Stop();
+			screen!.SetActive(false);
 			enabled = false;
+			if (options_window != null) {
+				UpdateToggleButton();
+			}
 		}
 		else {
 			string err = LoadVideo();
@@ -151,23 +160,29 @@ public class Cinema {
 		}
 	}
 	
+	internal void UpdateToggleButton() {
+		(options_window as OptionsWindow)!.toggle_visibility!.SetImage(Utils.LoadSprite(enabled
+			? "ChroMapper_Cinema.Resources.eye.png"
+			: "ChroMapper_Cinema.Resources.eye-slash.png"));
+	}
+	
 	private void Update() {
 		if (!enabled) return;
 		
-		var time = atsc.CurrentSeconds + offset;
+		var time = atsc!.CurrentSeconds + offset;
 		
 		// Causes lag when playing
 		if (!playing) {
-			player.time = time;
+			player!.time = time;
 		}
 		
 		if (atsc.IsPlaying && !playing && time >= 0) {
-			player.Play();
+			player!.Play();
 			playing = true;
 		}
 		
 		if (!atsc.IsPlaying && playing) {
-			player.Pause();
+			player!.Pause();
 			playing = false;
 		}
 	}
@@ -175,7 +190,7 @@ public class Cinema {
 	private void UpdateSongSpeed(object obj) {
 		if (!enabled) return;
 		
-		player.playbackSpeed = ((float)obj) / 10.0f;
+		player!.playbackSpeed = ((float)obj) / 10.0f;
 	}
 	
 	private void AfterSeek(VideoPlayer player) {

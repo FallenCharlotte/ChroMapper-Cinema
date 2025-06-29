@@ -34,7 +34,7 @@ class Options {
 			return _instance;
 		}
 	}
-	private static Options _instance;
+	private static Options? _instance;
 	
 	public PlatformSettings GetPlatformSettings(string platform) {
 		var key = (plat_settings.ContainsKey(platform))
@@ -47,7 +47,7 @@ class Options {
 	}
 	
 	public void LoadSettings() {
-		plat_settings = new Dictionary<string, PlatformSettings>();
+		plat_settings.Clear();
 		
 		if (File.Exists(settings_file)) {
 			Debug.Log("Reading Cinema settings file");
@@ -90,7 +90,7 @@ class Options {
 		SaveSettings();
 	}
 	
-	private Dictionary<string, PlatformSettings> plat_settings;
+	private Dictionary<string, PlatformSettings> plat_settings = new Dictionary<string, PlatformSettings>();
 };
 
 }

@@ -4,10 +4,10 @@ using SimpleJSON;
 namespace ChroMapper_Cinema {
 
 public class MapConfig {
-	public JSONObject cinema_video;
-	public string cinema_file;
-	public string map_dir;
-	public bool config_exists;
+	public JSONObject cinema_video = new JSONObject();
+	public string cinema_file = "";
+	public string map_dir = "";
+	public bool config_exists = false;
 	
 	public void Load() {
 #if CHROMPER_11
@@ -31,7 +31,7 @@ public class MapConfig {
 	
 	public void Save() {
 		var writer = new StreamWriter(cinema_file);
-		writer.Write(cinema_video.ToString());
+		writer.Write(cinema_video.ToString(4));
 		writer.Close();
 		
 	}
