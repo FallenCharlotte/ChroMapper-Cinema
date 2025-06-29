@@ -7,6 +7,7 @@ public class MapConfig {
 	public JSONObject cinema_video;
 	public string cinema_file;
 	public string map_dir;
+	public bool config_exists;
 	
 	public void Load() {
 #if CHROMPER_11
@@ -17,8 +18,11 @@ public class MapConfig {
 		cinema_file = Path.Combine(map_dir, "cinema-video.json");
 		if (!File.Exists(cinema_file)) {
 			cinema_video = new JSONObject();
+			config_exists = false;
 			return;
 		}
+		
+		config_exists = true;
 		
 		var reader = new StreamReader(cinema_file);
 		cinema_video = JSONNode.Parse(reader.ReadToEnd()).AsObject;

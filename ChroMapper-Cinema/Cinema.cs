@@ -80,6 +80,11 @@ public class Cinema {
 		var cinema_info = Plugin.map_config.cinema_video;
 		var map_dir = Plugin.map_config.map_dir;
 		
+		if (!Plugin.map_config.config_exists) {
+			return "";
+		}
+		
+		// TODO: This shit
 		Options.instance.LoadSettings();
 		plat_settings = Options.instance.GetPlatformSettings(platform);
 		if (cinema_info.HasKey("screenPosition")) {
@@ -119,6 +124,7 @@ public class Cinema {
 	}
 	
 	public void ButtonPress() {
+		Plugin.map_config.Load();
 		if (options_window != null) {
 			ToggleWindow();
 		}
