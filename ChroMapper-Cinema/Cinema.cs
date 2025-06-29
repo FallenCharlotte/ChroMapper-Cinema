@@ -17,7 +17,7 @@ public class Cinema {
 	private GameObject? parent;
 	private GameObject? screen;
 	private VideoPlayer? player;
-	private string platform = Options.default_key;
+	private string platform = "";
 	private PlatformSettings plat_settings;
 	
 	private float offset;
@@ -40,8 +40,8 @@ public class Cinema {
 		
 		var mesh = new Mesh();
 		mesh.name = "Scripted_Plane_New_Mesh";
-		mesh.vertices = new Vector3[] { Utils.V3(-0.5f, -0.5f, 0.01f), Utils.V3(0.5f, -0.5f, 0.01f), Utils.V3(0.5f, 0.5f, 0.01f), Utils.V3(-0.5f, 0.5f, 0.01f) };
-		mesh.uv = new Vector2[] { Utils.V2(0, 0), Utils.V2(1, 0), Utils.V2(1, 1), Utils.V2(0, 1) };
+		mesh.vertices = new Vector3[] { new Vector3(-0.5f, -0.5f, 0.01f), new Vector3(0.5f, -0.5f, 0.01f), new Vector3(0.5f, 0.5f, 0.01f), new Vector3(-0.5f, 0.5f, 0.01f) };
+		mesh.uv = new Vector2[] { new Vector2(0, 0), new Vector2(1, 0), new Vector2(1, 1), new Vector2(0, 1) };
 		mesh.triangles = new int[] { 2, 1, 0, 3, 2, 0 };
 		mesh.RecalculateNormals();
 		screen.AddComponent<MeshFilter>().mesh = mesh;
@@ -90,20 +90,18 @@ public class Cinema {
 			return "";
 		}
 		
-		// TODO: This shit
-		Options.instance.LoadSettings();
-		plat_settings = Options.instance.GetPlatformSettings(platform);
+		plat_settings = PlatformSettings.GetPlatformSettings(platform);
 		if (cinema_info.HasKey("screenPosition")) {
-			plat_settings.pos = Utils.JSONV3(cinema_info["screenPosition"].AsObject);
+			plat_settings.pos = cinema_info["screenPosition"].AsObject.ReadVector3();
 		}
 		if (cinema_info.HasKey("screenRotation")) {
-			plat_settings.rotation = Utils.JSONV3(cinema_info["screenRotation"].AsObject);
+			plat_settings.rotation = cinema_info["screenRotation"].AsObject.ReadVector3();
 		}
 		if (cinema_info.HasKey("screenHeight")) {
 			plat_settings.height = cinema_info["screenHeight"].AsFloat;
 		}
 		
-		offset = ((int)cinema_info["offset"]) / 1000.0f;
+		offset = ((cinema_info["offset"] as JSONNumber) ?? 0) / 1000.0f;
 		
 		var mapFolderName = new DirectoryInfo(map_dir).Name;
 		var wipDir = Directory.GetParent(map_dir).FullName;

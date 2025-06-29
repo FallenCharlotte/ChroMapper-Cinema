@@ -76,8 +76,8 @@
     <Compile Include="Plugin.cs" />
     <Compile Include="Cinema.cs" />
     <Compile Include="MapConfig.cs" />
-    <Compile Include="Options.cs" />
     <Compile Include="OptionsWindow.cs" />
+    <Compile Include="PlatformSettings.cs" />
     <Compile Include="Utils.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

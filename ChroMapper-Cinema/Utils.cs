@@ -33,24 +33,6 @@ class Utils {
 		return trans;
 	}
 	
-	public static Vector2 V2(float x, float y) {
-		return new Vector2(x, y);
-	}
-	public static Vector3 V3(float x, float y, float z) {
-		return new Vector3(x, y, z);
-	}
-	
-	public static Vector3 JSONV3(JSONObject o) {
-		return new Vector3(o["x"], o["y"], o["z"]);
-	}
-	public static JSONObject V3JSON(Vector3 v) {
-		JSONObject o = new JSONObject();
-		o.Add("x", v.x);
-		o.Add("y", v.y);
-		o.Add("z", v.z);
-		return o;
-	}
-	
 	public static string Error(string msg) {
 		Debug.Log(msg);
 		return msg;
