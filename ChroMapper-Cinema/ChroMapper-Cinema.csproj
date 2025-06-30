@@ -79,6 +79,7 @@
     <Compile Include="OptionsWindow.cs" />
     <Compile Include="PlatformSettings.cs" />
     <Compile Include="Utils.cs" />
+    <Compile Include="VideoDownloader.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

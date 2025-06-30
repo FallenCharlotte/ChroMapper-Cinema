@@ -41,6 +41,19 @@ internal class OptionsWindow : UIWindow {
 		
 		MakeTextbox("Video ID", "videoID", "The YouTube video ID from the part after the &v= in the URL");
 		MakeTextbox("Video URL", "videoUrl", "Use this parameter instead of videoID if you want to use a video hoster other than YouTube.");
+		{
+			var line = MakeLine("");
+			var download = UI.AddButton(line, "Download", () => {
+				var url = (Plugin.map_config!.cinema_video.HasKey("videoUrl"))
+					? (string)Plugin.map_config!["videoUrl"]
+					: ("https://www.youtube.com/watch?v=" + (string)Plugin.map_config!["videoID"]);
+				var filename = Plugin.map_config.cinema_video.HasKey("videoFile")
+					? (string)Plugin.map_config["videoFile"]
+					: null;
+				VideoDownloader.DownloadVideo(url, Plugin.map_config!.video_dir!, filename);
+			});
+			UI.AttachTransform(download.gameObject, new Vector2(0, 0), new Vector2(0, 0), new Vector2(0.5f, 0), new Vector2(1, 1));
+		}
 		MakeTextbox("Title", "title", "The title of the video. Will be shown to the user.");
 		MakeTextbox("Author", "author", "The name of the video's uploader. Will be shown to the user.");
 		MakeTextbox("Video File", "videoFile", "Name of the video file on the local file system.");

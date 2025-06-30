@@ -84,7 +84,6 @@ public class Cinema {
 	
 	public string LoadVideo() {
 		var cinema_info = Plugin.map_config!.cinema_video;
-		var map_dir = Plugin.map_config.map_dir;
 		
 		if (!Plugin.map_config.config_exists) {
 			return "";
@@ -103,21 +102,13 @@ public class Cinema {
 		
 		offset = ((cinema_info["offset"] as JSONNumber) ?? 0) / 1000.0f;
 		
-		var mapFolderName = new DirectoryInfo(map_dir).Name;
-		var wipDir = Directory.GetParent(map_dir).FullName;
-		var videoPath = Path.Combine(wipDir, "CinemaWIPVideos", mapFolderName, (string)cinema_info["videoFile"]);
-		
-		if (!File.Exists(videoPath)) {
-			videoPath = Path.Combine(map_dir, (string)cinema_info["videoFile"]);
-		}
-		
-		if (!File.Exists(videoPath)) {
+		if (!Plugin.map_config!.video_downloaded) {
 			return Utils.Error("Video file not downloaded!");
 		}
 		
 		screen!.SetActive(true);
 		
-		player!.url = videoPath;
+		player!.url = Plugin.map_config!.video_file!;
 		player!.Prepare();
 		
 		return "";
