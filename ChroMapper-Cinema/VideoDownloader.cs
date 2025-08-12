@@ -42,25 +42,11 @@ public class VideoDownloader {
 		}
 	}
 	
-	public void DownloadYTDLP() {
-		if (!Directory.Exists(TOOLS_DIR)) {
-			Directory.CreateDirectory(TOOLS_DIR);
-		}
-		var client = new System.Net.WebClient();
-		var url = "https://github.com/yt-dlp/yt-dlp/releases/latest/download/" + PlatformFilename();
-		Debug.Log($"Download yt-dlp: {url}");
-		client.DownloadFile(url, local_path);
-		ytdlp_path = local_path;
-	}
-	
 	public static void DownloadVideo(string url, string folder, string? filename = null) {
 		var downloader = new VideoDownloader();
 		
 		if (downloader.ytdlp_path == null) {
-			downloader.DownloadYTDLP();
-		}
-		if (downloader.ytdlp_path == null) {
-			Debug.LogError("Could not download yt-dlp");
+			PersistentUI.Instance.ShowDialogBox("Could not find yt-dlp!", null, PersistentUI.DialogBoxPresetType.Ok);
 			return;
 		}
 		
@@ -68,10 +54,13 @@ public class VideoDownloader {
 			? "-o \"%(title)s.%(ext)s\""
 			: $"-o \"{filename}\"";
 		
-		var args = $"-P \"{folder}\" {out_arg} \"{url}\"";
+		var args = $"-P \"{folder}\" -O \"%(title)s\" --no-simulate {out_arg} \"{url}\"";
 		
 		if (Application.platform == RuntimePlatform.LinuxEditor || Application.platform == RuntimePlatform.LinuxPlayer) {
-			args += "--merge-output-format mkv --recode-video webm --postprocessor-args 'VideoConvertor:-vcodec vp8 -acodec libvorbis'";
+			args += " --merge-output-format mkv --recode-video webm --postprocessor-args 'VideoConvertor:-vcodec vp8 -acodec libvorbis'";
+		}
+		else {
+			args += " --recode-video mp4";
 		}
 		
 		Debug.Log($"{downloader.ytdlp_path!} {args}");
@@ -84,19 +73,14 @@ public class VideoDownloader {
 		dl.StartInfo.RedirectStandardError = true;
 		dl.StartInfo.EnvironmentVariables["TMP"] = (new DirectoryInfo(TOOLS_DIR)).FullName;
 		dl.OutputDataReceived += (object _, System.Diagnostics.DataReceivedEventArgs outLine) => {
-			Debug.Log($"[yt-dlp] {outLine.Data}");
-			if (outLine.Data.StartsWith(DEST_PREFIX) && filename == null) {
-				var info = new FileInfo(outLine.Data.Remove(0, DEST_PREFIX.Length));
-				Plugin.map_config!["videoFile"] = info.Name;
-				(Plugin.controller!.options_window as OptionsWindow)!.Refresh();
-			}
-			if (outLine.Data.StartsWith(MERGE_PREFIX) && filename == null) {
-				var info = new FileInfo(outLine.Data.Remove(0, MERGE_PREFIX.Length));
-				Plugin.map_config!["videoFile"] = info.Name;
+			if (outLine.Data == "") return;
+			if (filename == null) {
+				Plugin.map_config!["videoFile"] = outLine.Data + ".mp4";
 				(Plugin.controller!.options_window as OptionsWindow)!.Refresh();
 			}
 		};
 		dl.ErrorDataReceived += (object _, System.Diagnostics.DataReceivedEventArgs outLine) => {
+			if (outLine.Data == "") return;
 			Debug.LogError($"[yt-dlp] {outLine.Data}");
 		};
 		dl.Exited += (object _, System.EventArgs _) => {
@@ -109,9 +93,6 @@ public class VideoDownloader {
 		dl.BeginOutputReadLine();
 		dl.BeginErrorReadLine();
 	}
-	
-	private static readonly string DEST_PREFIX = "[download] Destination: ";
-	private static readonly string MERGE_PREFIX = "[Merger] Merging formats into ";
 };
 
 }

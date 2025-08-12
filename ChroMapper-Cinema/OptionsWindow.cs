@@ -37,12 +37,10 @@ internal class OptionsWindow : UIWindow {
 	}
 	
 	public void Refresh() {
-		// TODO: Clear window when needed
-		
 		MakeTextbox("Video ID", "videoID", "The YouTube video ID from the part after the &v= in the URL");
 		MakeTextbox("Video URL", "videoUrl", "Use this parameter instead of videoID if you want to use a video hoster other than YouTube.");
 		{
-			var line = MakeLine("");
+			var line = MakeEmpty("Download");
 			var download = UI.AddButton(line, "Download", () => {
 				var url = (Plugin.map_config!.cinema_video.HasKey("videoUrl"))
 					? (string)Plugin.map_config!["videoUrl"]
@@ -61,7 +59,7 @@ internal class OptionsWindow : UIWindow {
 		MakeParsed<int>("Offset", "offset", "Video duration in seconds. The offset in milliseconds to align the video with the map.");
 		MakeCheckbox("Config By Mapper", "configByMapper", false, "Whether the config was created by the mapper.");
 		
-		MakeLine("");
+		MakeEmpty("Spacer");
 		
 		AddExpando("cinemaAdvanced", "Advanced Settings", false); {
 			// TODO: Dropdown
@@ -103,7 +101,16 @@ internal class OptionsWindow : UIWindow {
 	}
 	
 	private GameObject MakeLine(string name, Vector2? size = null, string tooltip = "") {
-		return UI.AddField(current_panel!, name, size, tooltip);
+		return current_panel!.transform.Find(name)?.gameObject
+			?? UI.AddField(current_panel!, name, null);
+	}
+	
+	private GameObject MakeEmpty(string name) {
+		var obj = MakeLine(name);
+		if (obj.transform.Find(name + " Label") is Transform t) {
+			GameObject.Destroy(t.gameObject);
+		}
+		return obj;
 	}
 	
 	private Toggle MakeCheckbox(string label, string key, bool _default, string tooltip = "") {
@@ -122,7 +129,9 @@ internal class OptionsWindow : UIWindow {
 			Plugin.map_config.Save();
 		};
 		
-		return UI.AddCheckbox(line, value, setter);
+		return (line.GetComponentInChildren<Toggle>() is Toggle toggle)
+			? UI.UpdateCheckbox(toggle, value, setter)
+			: UI.AddCheckbox(line, value, setter);
 	}
 	
 	private UIDropdown MakeDropdown<T>(string label, string key, Map<T?> type, bool nullable = false, string tooltip = "") {
@@ -134,20 +143,24 @@ internal class OptionsWindow : UIWindow {
 		
 		UnityAction<T?> setter = Setter<T?>(key);
 		
-		return UI.AddDropdown(line, value, setter, type, nullable);
+		return UI.SingleDropdown(line, value, setter, type, nullable);
 	}
 	
 	private Textbox MakeTextbox(string label, string key, string tooltip = "") {
 		var line = MakeLine(label, null, tooltip);
-		var input = Textbox.Create(line, false);
-		UI.AttachTransform(input.gameObject, new Vector2(0, 0), new Vector2(0, 0), new Vector2(0.5f, 0), new Vector2(1, 1));
-		
 		var value = (string)Plugin.map_config![key];
 		Textbox.Setter setter = (string? v) => {
 			Plugin.map_config[key] = v;
 		};
 		
-		return input.Set(value, false, setter);
+		if (line.GetComponentInChildren<Textbox>() is Textbox textbox) {
+			return textbox.Set(value, false, setter);
+		}
+		else {
+			textbox = Textbox.Create(line);
+			UI.AttachTransform(textbox.gameObject, new Vector2(0, 0), new Vector2(0, 0), new Vector2(0.5f, 0), new Vector2(1, 1));
+			return textbox.Set(value, false, setter);
+		}
 	}
 	
 	private Textbox MakeParsed<T>(string label, string key, string tooltip = "") where T : struct {
