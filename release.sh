@@ -37,14 +37,9 @@ git commit -m "${tag}"
 git tag "${tag}"
 
 msbuild
-msbuild /p:DefineConstants="CHROMPER_11"
 
 pushd $PROJECT/bin/Dev
 zip "ChroMapper-12-Cinema-${tag}.zip" Plugins/$PROJECT.dll
-popd
-
-pushd $PROJECT/bin/Stable
-zip "ChroMapper-11-Cinema-${tag}.zip" Plugins/$PROJECT.dll
 popd
 
 echo "Check..."
