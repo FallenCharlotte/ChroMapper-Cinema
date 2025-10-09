@@ -5,14 +5,14 @@ namespace ChroMapper_Cinema {
 
 [Plugin("Cinema")]
 public class Plugin {
-	public static Cinema? controller;
+	public static CinemaController? controller;
 	public static MapConfig? map_config;
 	public static ExtensionButton? main_button = null;
 	public static bool enableUI = false;
 	
 	[Init]
 	private void Init() {
-		controller = new Cinema();
+		controller = new CinemaController();
 		map_config = new MapConfig();
 		
 		try {
@@ -28,7 +28,7 @@ public class Plugin {
 			controller.ButtonPress);
 		
 		LoadInitialMap.PlatformLoadedEvent += PlatformLoaded;
-		SceneManager.sceneLoaded += SceneLoaded;
+		//SceneManager.sceneLoaded += SceneLoaded;
 		
 		Debug.Log("Cinema Plugin has loaded!");
 	}
@@ -37,18 +37,18 @@ public class Plugin {
 		var atsc = Object.FindObjectOfType<AudioTimeSyncController>();
 		controller!.Init(atsc, descriptor.gameObject);
 	}
-	
+	/*
 	private void SceneLoaded(Scene scene, LoadSceneMode mode) {
 		if (scene.buildIndex == 3) {
-			map_config!.Load();
-			
 			if (enableUI) {
 				var mapEditorUI = Object.FindObjectOfType<MapEditorUI>();
 				controller!.MakeWindow(mapEditorUI);
 			}
+			
+			map_config!.Load();
 		}
 	}
-	
+	*/
 	[Exit]
 	private void Exit() {
 		

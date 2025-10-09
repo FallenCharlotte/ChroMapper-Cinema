@@ -32,8 +32,6 @@ internal class OptionsWindow : UIWindow {
 			var tooltip = toggle_visibility.gameObject.AddComponent<Tooltip>();
 			tooltip.TooltipOverride = "Toggle Screen Visibility";
 		}
-		
-		Refresh();
 	}
 	
 	public void Refresh() {
@@ -150,6 +148,7 @@ internal class OptionsWindow : UIWindow {
 		var line = MakeLine(label, null, tooltip);
 		var value = (string)Plugin.map_config![key];
 		Textbox.Setter setter = (string? v) => {
+			Debug.Log("Setting?");
 			Plugin.map_config[key] = v;
 		};
 		
@@ -184,6 +183,7 @@ internal class OptionsWindow : UIWindow {
 			else {
 				Data.RemoveNode(Plugin.map_config!.cinema_video, key);
 			}
+			Debug.Log($"Updated {key}!");
 			Plugin.map_config.Save();
 		};
 	}

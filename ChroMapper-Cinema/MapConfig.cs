@@ -47,6 +47,7 @@ public class MapConfig {
 		writer.Close();
 		
 		TryVideo();
+		Plugin.controller!.LoadVideo();
 	}
 	
 	public void TryVideo() {
@@ -74,6 +75,7 @@ public class MapConfig {
 		}
 		
 		video_downloaded = File.Exists(video_file);
+		Debug.Log($"video_downloaded: {video_downloaded}");
 	}
 	
 	public JSONNode this[string key] {

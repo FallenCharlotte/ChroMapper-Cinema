@@ -6,14 +6,14 @@ using SimpleJSON;
 
 namespace ChroMapper_Cinema {
 
-public class Cinema {
+public class CinemaController {
 	public JSONObject cinema_info = new JSONObject();
 	
 	internal object? options_window = null;
 	
 	private AudioTimeSyncController? atsc = null;
 	
-	public bool enabled = false;
+	public bool showPlayer = false;
 	private GameObject? parent;
 	private GameObject? screen;
 	private VideoPlayer? player;
@@ -23,7 +23,7 @@ public class Cinema {
 	private float offset;
 	private bool playing;
 	
-	public Cinema() {
+	public CinemaController() {
 		
 	}
 	
@@ -52,7 +52,7 @@ public class Cinema {
 		
 		player = screen.AddComponent<VideoPlayer>();
 		player.errorReceived += (VideoPlayer p, string msg) => {
-			enabled = false;
+			showPlayer = false;
 			screen.SetActive(false);
 			if (options_window != null) {
 				UpdateToggleButton();
@@ -63,27 +63,37 @@ public class Cinema {
 			var scale = new Vector2(plat_settings.height / p.height * p.width, plat_settings.height);
 			Utils.SetTransform(screen, plat_settings.pos * 1.667f, scale * 1.667f, plat_settings.rotation);
 			Debug.Log("Cinema prepared: " + (p.isPrepared ? "true" : "false"));
-			enabled = true;
+			showPlayer = true;
 			playing = false;
 			
 			if (options_window != null) {
 				UpdateToggleButton();
 			}
 			
-			Update();
+			OnTimeChanged();
 		};
 		player.seekCompleted += AfterSeek;
 		player.playOnAwake = true;
 		player.audioOutputMode = VideoAudioOutputMode.None;
 		
-		LoadVideo();
-		
-		atsc.TimeChanged += Update;
+		atsc.TimeChanged += OnTimeChanged;
 		Settings.NotifyBySettingName("SongSpeed", UpdateSongSpeed);
+		
+		if (Plugin.enableUI) {
+			var mapEditorUI = Object.FindObjectOfType<MapEditorUI>();
+			MakeWindow(mapEditorUI);
+		}
+		
+		Plugin.map_config!.Load();
+		LoadVideo();
 	}
 	
 	public string LoadVideo() {
 		var cinema_info = Plugin.map_config!.cinema_video;
+		
+		if (options_window != null) {
+			RefreshWindow();
+		}
 		
 		if (!Plugin.map_config.config_exists) {
 			return "";
@@ -103,6 +113,11 @@ public class Cinema {
 		offset = ((cinema_info["offset"] as JSONNumber) ?? 0) / 1000.0f;
 		
 		if (!Plugin.map_config!.video_downloaded) {
+			showPlayer = false;
+			screen!.SetActive(false);
+			if (options_window != null) {
+				UpdateToggleButton();
+			}
 			return Utils.Error("Video file not downloaded!");
 		}
 		
@@ -132,11 +147,15 @@ public class Cinema {
 		(options_window as OptionsWindow)!.ToggleWindow();
 	}
 	
+	internal void RefreshWindow() {
+		(options_window as OptionsWindow)!.Refresh();
+	}
+	
 	public void ToggleEnabled() {
-		if (enabled) {
+		if (showPlayer) {
 			player!.Stop();
 			screen!.SetActive(false);
-			enabled = false;
+			showPlayer = false;
 			if (options_window != null) {
 				UpdateToggleButton();
 			}
@@ -150,13 +169,13 @@ public class Cinema {
 	}
 	
 	internal void UpdateToggleButton() {
-		(options_window as OptionsWindow)!.toggle_visibility!.SetImage(Utils.LoadSprite(enabled
+		(options_window as OptionsWindow)!.toggle_visibility!.SetImage(Utils.LoadSprite(showPlayer
 			? "ChroMapper_Cinema.Resources.eye.png"
 			: "ChroMapper_Cinema.Resources.eye-slash.png"));
 	}
 	
-	private void Update() {
-		if (!enabled) return;
+	private void OnTimeChanged() {
+		if (!showPlayer) return;
 		
 		var time = atsc!.CurrentSeconds + offset;
 		
@@ -177,7 +196,7 @@ public class Cinema {
 	}
 	
 	private void UpdateSongSpeed(object obj) {
-		if (!enabled) return;
+		if (!showPlayer) return;
 		
 		player!.playbackSpeed = ((float)obj) / 10.0f;
 	}
