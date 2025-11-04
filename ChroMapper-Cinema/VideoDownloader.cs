@@ -8,8 +8,8 @@ namespace ChroMapper_Cinema {
 
 public class VideoDownloader {
 	public string? ytdlp_path;
-	public string local_path;
 	public static readonly string TOOLS_DIR = "Plugins/Tools";
+	public static readonly string BS_LIBS_DIR = "Libs";
 	
 	public static string PlatformFilename() {
 		return Application.platform switch {
@@ -24,22 +24,29 @@ public class VideoDownloader {
 	}
 	
 	private VideoDownloader() {
-		local_path = Path.Combine(TOOLS_DIR, PlatformFilename());
-		
-		// Check if it's in PATH
-		try {
-			System.Diagnostics.Process.Start("yt-dlp",  "--version");
-			ytdlp_path = "yt-dlp";
-			Debug.Log("Using system yt-dlp");
-			return;
-		}
-		catch(System.Exception) { }
+		var bs_path = Path.Combine(Settings.Instance.BeatSaberInstallation, BS_LIBS_DIR, PlatformFilename());
+		var local_path = Path.Combine(TOOLS_DIR, PlatformFilename());
 		
 		// Check local folder
 		if (File.Exists(local_path)) {
 			ytdlp_path = local_path;
 			Debug.Log("Using local " + PlatformFilename());
 		}
+		
+		// Check Beat Saber folder
+		if (File.Exists(bs_path)) {
+			ytdlp_path = bs_path;
+			Debug.Log("Using Beat Saber " + PlatformFilename());
+		}
+		
+		// Check if it's in PATH
+		try {
+			var p = System.Diagnostics.Process.Start("yt-dlp",  "--version");
+			ytdlp_path = "yt-dlp";
+			Debug.Log("Using system yt-dlp");
+			return;
+		}
+		catch(System.Exception) { }
 	}
 	
 	public static void DownloadVideo(string url, string folder, string? filename = null) {
