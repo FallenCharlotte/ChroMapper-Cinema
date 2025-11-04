@@ -22,9 +22,14 @@ public class MapConfig {
 		cinema_file = Path.Combine(map_dir, "cinema-video.json");
 		
 		var mapFolderName = new DirectoryInfo(map_dir!).Name;
-		var wipDir = Directory.GetParent(map_dir!).FullName;
+		var parentFolder = Directory.GetParent(map_dir!).FullName;
 		
-		video_dir = Path.Combine(wipDir, "CinemaWIPVideos", mapFolderName);
+		if (parentFolder == Settings.Instance.CustomWIPSongsFolder) {
+			video_dir = Path.Combine(parentFolder, "CinemaWIPVideos", mapFolderName);
+		}
+		else {
+			video_dir = map_dir;
+		}
 		
 		if (!File.Exists(cinema_file)) {
 			cinema_video = new JSONObject();
