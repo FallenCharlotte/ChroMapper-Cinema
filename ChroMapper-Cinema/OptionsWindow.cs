@@ -91,7 +91,7 @@ internal class OptionsWindow : UIWindow {
 			MakeDropdown("Type", "vignette.type", VignetteTypes, true, "Changes how the radius and softness parameters behave.");
 			MakeParsed<float>("Radius", "vignette.radius", "Valid range: 0 to 1.\nIf the type is \"elliptical\", the screen is only really elliptical if the radius is set to 0. Values above that simply round the corners of the screen to varying degrees.");
 			MakeParsed<float>("Softness", "vignette.softness", "Valid range: 0 to 1. Defines the sharpness of the cutout.");
-		}
+		} panels.Pop();
 		
 		// TODO: Additional Screens
 		
@@ -164,7 +164,8 @@ internal class OptionsWindow : UIWindow {
 	
 	private Textbox MakeParsed<T>(string label, string key, string tooltip = "") where T : struct {
 		var line = MakeLine(label, null, tooltip);
-		var input = Textbox.Create(line, false);
+		var input = line.GetComponentInChildren<Textbox>()
+			?? Textbox.Create(line, false);
 		UI.AttachTransform(input.gameObject, new Vector2(0, 0), new Vector2(0, 0), new Vector2(0.5f, 0), new Vector2(1, 1));
 		
 		var value = (Data.GetNode(Plugin.map_config!.cinema_video, key) is JSONNode n)
@@ -189,7 +190,7 @@ internal class OptionsWindow : UIWindow {
 	}
 	
 	private void MakeVector3(string name, string key, string tooltip = "") {
-		panels.Push(UI.AddChild(current_panel!, name).AddComponent<Collapsible>().Init(name, false, tooltip, false).panel!);
+		AddExpando(name, name, false, tooltip, false);
 		
 		current_panel!.GetComponent<VerticalLayoutGroup>().padding = new RectOffset(5, 5, 0, 5);
 		

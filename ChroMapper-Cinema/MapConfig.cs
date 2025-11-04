@@ -14,11 +14,7 @@ public class MapConfig {
 	public bool video_downloaded = false;
 	
 	public void Load() {
-#if CHROMPER_11
-		map_dir = BeatSaberSongContainer.Instance.Song.Directory;
-#else
 		map_dir = BeatSaberSongContainer.Instance.Info.Directory;
-#endif
 		cinema_file = Path.Combine(map_dir, "cinema-video.json");
 		
 		var mapFolderName = new DirectoryInfo(map_dir!).Name;
