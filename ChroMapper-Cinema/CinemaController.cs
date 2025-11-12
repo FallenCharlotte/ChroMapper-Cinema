@@ -101,7 +101,7 @@ public class CinemaController {
 		
 		plat_settings = PlatformSettings.GetPlatformSettings(platform);
 		if (cinema_info.HasKey("screenPosition")) {
-			plat_settings.pos = cinema_info["screenPosition"].AsObject.ReadVector3();
+			ReadInVector3(ref plat_settings.pos, cinema_info["screenPosition"].AsObject);
 		}
 		if (cinema_info.HasKey("screenRotation")) {
 			plat_settings.rotation = cinema_info["screenRotation"].AsObject.ReadVector3();
@@ -127,6 +127,12 @@ public class CinemaController {
 		player!.Prepare();
 		
 		return "";
+	}
+	
+	private void ReadInVector3(ref Vector3 dest, JSONObject source) {
+		if (source.HasKey("x")) dest.x = source["x"].AsFloat;
+		if (source.HasKey("y")) dest.y = source["y"].AsFloat;
+		if (source.HasKey("z")) dest.z = source["z"].AsFloat;
 	}
 	
 	internal void MakeWindow(MapEditorUI mapEditorUI) {

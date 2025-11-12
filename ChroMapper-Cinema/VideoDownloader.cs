@@ -13,8 +13,8 @@ public class VideoDownloader {
 	
 	public static string PlatformFilename() {
 		return Application.platform switch {
-			RuntimePlatform.LinuxEditor => "yt-dlp",
-			RuntimePlatform.LinuxPlayer => "yt-dlp",
+			RuntimePlatform.LinuxEditor => "yt-dlp_linux",
+			RuntimePlatform.LinuxPlayer => "yt-dlp_linux",
 			RuntimePlatform.OSXEditor => "yt-dlp_macos",
 			RuntimePlatform.OSXPlayer => "yt-dlp_macos",
 			RuntimePlatform.WindowsEditor => "yt-dlp.exe",
