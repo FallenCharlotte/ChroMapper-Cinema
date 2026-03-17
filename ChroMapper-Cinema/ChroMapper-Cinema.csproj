@@ -63,6 +63,9 @@
     <Reference Include="ChroMapper-PropEdit">
       <HintPath>$(ChroMapperDir)\Plugins\ChroMapper-PropEdit.dll</HintPath>
     </Reference>
+    <Reference Include="LibVLCSharp">
+      <HintPath>../Lib/LibVLCSharp.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
@@ -80,6 +83,7 @@
     <Compile Include="PlatformSettings.cs" />
     <Compile Include="Utils.cs" />
     <Compile Include="VideoDownloader.cs" />
+    <Compile Include="VLCPlayer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

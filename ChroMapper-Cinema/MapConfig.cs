@@ -59,14 +59,14 @@ public class MapConfig {
 		}
 		
 		video_file = Path.Combine(video_dir, (string)cinema_video["videoFile"]);
-		
+		/*
 		switch (Application.platform) {
 		case RuntimePlatform.LinuxEditor:
 		case RuntimePlatform.LinuxPlayer:
 			video_file = video_file.Replace(".mp4", ".webm");
 			break;
 		}
-		
+		*/
 		if (!File.Exists(video_file)) {
 			var old_location = Path.Combine(map_dir, (string)cinema_video["videoFile"]);
 			if (File.Exists(old_location)) {

@@ -65,7 +65,7 @@ public class VideoDownloader {
 		
 		var args = $"-P \"{folder}\" -O \"%(title)s\" --no-simulate {out_arg} \"{url}\"";
 		
-		if (Application.platform == RuntimePlatform.LinuxEditor || Application.platform == RuntimePlatform.LinuxPlayer) {
+		if (false && Application.platform == RuntimePlatform.LinuxEditor || Application.platform == RuntimePlatform.LinuxPlayer) {
 			args += " --merge-output-format mkv --recode-video webm --postprocessor-args 'VideoConvertor:-vcodec vp8 -acodec libvorbis'";
 		}
 		else {

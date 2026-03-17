@@ -16,7 +16,8 @@ public class CinemaController {
 	public bool showPlayer = false;
 	private GameObject? parent;
 	private GameObject? screen;
-	private VideoPlayer? player;
+	//private VideoPlayer? player;
+	private VLCPlayer? player;
 	private string platform = "";
 	private PlatformSettings plat_settings;
 	
@@ -50,7 +51,8 @@ public class CinemaController {
 		mat.color = Color.white;
 		screen.AddComponent<MeshRenderer>().material = mat;
 		
-		player = screen.AddComponent<VideoPlayer>();
+		player = screen.AddComponent<VLCPlayer>();
+		/*
 		player.errorReceived += (VideoPlayer p, string msg) => {
 			showPlayer = false;
 			screen.SetActive(false);
@@ -71,7 +73,7 @@ public class CinemaController {
 		player.seekCompleted += AfterSeek;
 		player.playOnAwake = true;
 		player.audioOutputMode = VideoAudioOutputMode.None;
-		
+		*/
 		atsc.TimeChanged += OnTimeChanged;
 		Settings.NotifyBySettingName("SongSpeed", UpdateSongSpeed);
 		
@@ -115,8 +117,17 @@ public class CinemaController {
 		
 		screen!.SetActive(true);
 		
+		player!.Path = Plugin.map_config!.video_file!;
+		/*
 		player!.url = Plugin.map_config!.video_file!;
 		player!.Prepare();
+		*/
+		showPlayer = true;
+		playing = false;
+		
+		TryRefreshWindow();
+		
+		OnTimeChanged();
 		
 		return "";
 	}
@@ -157,7 +168,7 @@ public class CinemaController {
 	
 	public void ToggleEnabled() {
 		if (showPlayer) {
-			player!.Stop();
+			player!.Pause();
 			screen!.SetActive(false);
 			showPlayer = false;
 			TryRefreshWindow();
@@ -172,36 +183,41 @@ public class CinemaController {
 	
 	private void OnTimeChanged() {
 		if (!showPlayer) return;
-		
+		/*
 		var time = atsc!.CurrentSeconds + offset;
 		
 		// Causes lag when playing
-		if (!playing) {
-			player!.time = time;
+		if (!playing && time >= 0) {
+			Debug.Log("Seek!");
+			vlc_player!.Time = (long)(time * 1000);
 		}
 		
 		if (atsc.IsPlaying && !playing && time >= 0) {
-			player!.Play();
+			Debug.Log(vlc_player!.Media.State);
+			Debug.Log("Play!");
+			vlc_player!.Play();
 			playing = true;
 		}
 		
 		if (!atsc.IsPlaying && playing) {
-			player!.Pause();
+			Debug.Log(vlc_player!.Media.State);
+			Debug.Log("Pause!");
+			vlc_player!.Pause();
 			playing = false;
-		}
+		}*/
 	}
 	
 	private void UpdateSongSpeed(object obj) {
 		if (!showPlayer) return;
 		
-		player!.playbackSpeed = ((float)obj) / 10.0f;
+		//vlc_player!.playbackSpeed = ((float)obj) / 10.0f;
 	}
 	
-	private void AfterSeek(VideoPlayer player) {
+	/*private void AfterSeek(VideoPlayer player) {
 		if (!playing) {
 			player.StepForward();
 		}
-	}
+	}*/
 }
 
 }
