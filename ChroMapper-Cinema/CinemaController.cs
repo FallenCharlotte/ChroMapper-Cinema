@@ -54,9 +54,7 @@ public class CinemaController {
 		player.errorReceived += (VideoPlayer p, string msg) => {
 			showPlayer = false;
 			screen.SetActive(false);
-			if (options_window != null) {
-				UpdateToggleButton();
-			}
+			TryRefreshWindow();
 			throw new System.Exception(msg);
 		};
 		player.prepareCompleted += (VideoPlayer p) => {
@@ -66,9 +64,7 @@ public class CinemaController {
 			showPlayer = true;
 			playing = false;
 			
-			if (options_window != null) {
-				UpdateToggleButton();
-			}
+			TryRefreshWindow();
 			
 			OnTimeChanged();
 		};
@@ -91,9 +87,7 @@ public class CinemaController {
 	public string LoadVideo() {
 		var cinema_info = Plugin.map_config!.cinema_video;
 		
-		if (options_window != null) {
-			RefreshWindow();
-		}
+		TryRefreshWindow();
 		
 		if (!Plugin.map_config.config_exists) {
 			return "";
@@ -115,9 +109,7 @@ public class CinemaController {
 		if (!Plugin.map_config!.video_downloaded) {
 			showPlayer = false;
 			screen!.SetActive(false);
-			if (options_window != null) {
-				UpdateToggleButton();
-			}
+			TryRefreshWindow();
 			return Utils.Error("Video file not downloaded!");
 		}
 		
@@ -153,8 +145,14 @@ public class CinemaController {
 		(options_window as OptionsWindow)!.ToggleWindow();
 	}
 	
+	public void TryRefreshWindow() {
+		if (options_window != null) {
+			RefreshWindow();
+		}
+	}
+	
 	internal void RefreshWindow() {
-		(options_window as OptionsWindow)!.Refresh();
+		(options_window as OptionsWindow)!.TriggerRefresh();
 	}
 	
 	public void ToggleEnabled() {
@@ -162,9 +160,7 @@ public class CinemaController {
 			player!.Stop();
 			screen!.SetActive(false);
 			showPlayer = false;
-			if (options_window != null) {
-				UpdateToggleButton();
-			}
+			TryRefreshWindow();
 		}
 		else {
 			string err = LoadVideo();
@@ -172,12 +168,6 @@ public class CinemaController {
 				PersistentUI.Instance.ShowDialogBox(err, null, PersistentUI.DialogBoxPresetType.Ok);
 			}
 		}
-	}
-	
-	internal void UpdateToggleButton() {
-		(options_window as OptionsWindow)!.toggle_visibility!.SetImage(Utils.LoadSprite(showPlayer
-			? "ChroMapper_Cinema.Resources.eye.png"
-			: "ChroMapper_Cinema.Resources.eye-slash.png"));
 	}
 	
 	private void OnTimeChanged() {

@@ -25,18 +25,20 @@ public class VideoDownloader {
 	
 	private VideoDownloader() {
 		var bs_path = Path.Combine(Settings.Instance.BeatSaberInstallation, BS_LIBS_DIR, PlatformFilename());
-		var local_path = Path.Combine(TOOLS_DIR, PlatformFilename());
+		var local_path = Path.Combine(Directory.GetCurrentDirectory(), TOOLS_DIR, PlatformFilename());
 		
 		// Check local folder
 		if (File.Exists(local_path)) {
 			ytdlp_path = local_path;
 			Debug.Log("Using local " + PlatformFilename());
+			return;
 		}
 		
 		// Check Beat Saber folder
 		if (File.Exists(bs_path)) {
 			ytdlp_path = bs_path;
 			Debug.Log("Using Beat Saber " + PlatformFilename());
+			return;
 		}
 		
 		// Check if it's in PATH
@@ -57,7 +59,7 @@ public class VideoDownloader {
 			return;
 		}
 		
-		var out_arg = (filename == null)
+		var out_arg = String.IsNullOrWhiteSpace(filename)
 			? "-o \"%(title)s.%(ext)s\""
 			: $"-o \"{filename}\"";
 		
@@ -80,14 +82,15 @@ public class VideoDownloader {
 		dl.StartInfo.RedirectStandardError = true;
 		dl.StartInfo.EnvironmentVariables["TMP"] = (new DirectoryInfo(TOOLS_DIR)).FullName;
 		dl.OutputDataReceived += (object _, System.Diagnostics.DataReceivedEventArgs outLine) => {
-			if (outLine.Data == "") return;
+			if (String.IsNullOrWhiteSpace(outLine.Data)) return;
 			if (filename == null) {
 				Plugin.map_config!["videoFile"] = outLine.Data + ".mp4";
-				(Plugin.controller!.options_window as OptionsWindow)!.Refresh();
+				Debug.LogError($"videoFile: {outLine.Data}.mp4");
+				Plugin.controller!.RefreshWindow();
 			}
 		};
 		dl.ErrorDataReceived += (object _, System.Diagnostics.DataReceivedEventArgs outLine) => {
-			if (outLine.Data == "") return;
+			if (String.IsNullOrWhiteSpace(outLine.Data)) return;
 			Debug.LogError($"[yt-dlp] {outLine.Data}");
 		};
 		dl.Exited += (object _, System.EventArgs _) => {

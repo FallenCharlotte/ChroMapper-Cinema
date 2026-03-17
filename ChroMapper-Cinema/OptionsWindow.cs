@@ -1,3 +1,4 @@
+using System.Collections;
 using System.IO;
 using System.Linq;
 using System.Linq.Expressions;
@@ -16,6 +17,7 @@ namespace ChroMapper_Cinema {
 
 internal class OptionsWindow : UIWindow {
 	public UIButton? toggle_visibility;
+	private bool should_refresh = true;
 	
 	public static OptionsWindow InitProxy(MapEditorUI mapEditorUI) {
 		return UIWindow.Create<OptionsWindow>(mapEditorUI);
@@ -34,7 +36,18 @@ internal class OptionsWindow : UIWindow {
 		}
 	}
 	
-	public void Refresh() {
+	public void TriggerRefresh() {
+		should_refresh = true;
+	}
+	
+	private void Update() {
+		if (should_refresh) {
+			Refresh();
+			should_refresh = false;
+		}
+	}
+	
+	private void Refresh() {
 		MakeTextbox("Video ID", "videoID", "The YouTube video ID from the part after the &v= in the URL");
 		MakeTextbox("Video URL", "videoUrl", "Use this parameter instead of videoID if you want to use a video hoster other than YouTube.");
 		{
@@ -96,6 +109,10 @@ internal class OptionsWindow : UIWindow {
 		// TODO: Additional Screens
 		
 		// TODO: Environment
+		
+		toggle_visibility!.SetImage(Utils.LoadSprite(Plugin.controller!.showPlayer
+			? "ChroMapper_Cinema.Resources.eye.png"
+			: "ChroMapper_Cinema.Resources.eye-slash.png"));
 	}
 	
 	private GameObject MakeLine(string name, Vector2? size = null, string tooltip = "") {

@@ -63,7 +63,7 @@ public class MapConfig {
 		switch (Application.platform) {
 		case RuntimePlatform.LinuxEditor:
 		case RuntimePlatform.LinuxPlayer:
-			video_file += ".webm";
+			video_file = video_file.Replace(".mp4", ".webm");
 			break;
 		}
 		
