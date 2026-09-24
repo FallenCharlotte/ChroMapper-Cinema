@@ -27,11 +27,11 @@ public class CinemaController {
 		
 	}
 	
-	public void Init(AudioTimeSyncController atsc, GameObject platform) {
+	public void Init(GameObject platform) {
 		this.parent = platform;
-		this.atsc = atsc;
+		this.atsc = Object.FindObjectOfType<AudioTimeSyncController>();
 		
-		this.platform = platform.name.Replace("(Clone)", "");
+		this.platform = BeatSaberSongContainer.Instance.Info.EnvironmentName;
 		Debug.Log($"Platform: {this.platform}");
 		
 		screen = new GameObject("Cinema Screen");
@@ -48,6 +48,7 @@ public class CinemaController {
 		
 		var mat = new Material(Shader.Find("UI/Default"));
 		mat.color = Color.white;
+		mat.SetFloat("_ColorMask", 14.0f); // No idea what this means but it looks fine
 		screen.AddComponent<MeshRenderer>().material = mat;
 		
 		player = screen.AddComponent<VideoPlayer>();
@@ -72,7 +73,11 @@ public class CinemaController {
 		player.playOnAwake = true;
 		player.audioOutputMode = VideoAudioOutputMode.None;
 		
+#if CHROMPER_13
 		atsc.TimeChanged += OnTimeChanged;
+#else
+		atsc.OnTimeChanged += OnTimeChanged;
+#endif
 		Settings.NotifyBySettingName("SongSpeed", UpdateSongSpeed);
 		
 		if (Plugin.enableUI) {

@@ -72,7 +72,7 @@ internal class OptionsWindow : UIWindow {
 		
 		MakeEmpty("Spacer");
 		
-		AddExpando("cinemaAdvanced", "Advanced Settings", false); {
+		Expando("cinemaAdvanced", "Advanced Settings", false); {
 			// TODO: Dropdown
 			MakeTextbox("Environment", "environmentName", "Force a specific environment that is only used if the user has Cinema installed and the video downloaded.");
 			MakeParsed<float>("Playback Speed", "playbackSpeed", "Adjust the playback speed of the video.");
@@ -91,7 +91,7 @@ internal class OptionsWindow : UIWindow {
 			MakeParsed<float>("Bloom", "bloom", "Sets the amount of bloom (glow) that appears around the video player during brightly colored parts of the video.");
 		} panels.Pop();
 		
-		AddExpando("cinemaColorCorrect", "Color Correction", false); {
+		Expando("cinemaColorCorrect", "Color Correction", false); {
 			MakeParsed<float>("Brightness", "colorCorrection.brightness", "Valid range: 0-2");
 			MakeParsed<float>("Contrast", "colorCorrection.contrast", "Valid range: 0-5");
 			MakeParsed<float>("Saturation", "colorCorrection.saturation", "Valid range: 0-5");
@@ -100,7 +100,7 @@ internal class OptionsWindow : UIWindow {
 			MakeParsed<float>("Hue", "colorCorrection.hue", "Valid range: -360 to +360 (in degrees)");
 		} panels.Pop();
 		
-		AddExpando("cinemaVignette", "Vignette", false); {
+		Expando("cinemaVignette", "Vignette", false); {
 			MakeDropdown("Type", "vignette.type", VignetteTypes, true, "Changes how the radius and softness parameters behave.");
 			MakeParsed<float>("Radius", "vignette.radius", "Valid range: 0 to 1.\nIf the type is \"elliptical\", the screen is only really elliptical if the radius is set to 0. Values above that simply round the corners of the screen to varying degrees.");
 			MakeParsed<float>("Softness", "vignette.softness", "Valid range: 0 to 1. Defines the sharpness of the cutout.");
@@ -130,39 +130,25 @@ internal class OptionsWindow : UIWindow {
 	
 	private Toggle MakeCheckbox(string label, string key, bool _default, string tooltip = "") {
 		var line = MakeLine(label, null, tooltip);
-		var value = (Data.GetNode(Plugin.map_config!.cinema_video, key) is JSONNode n)
-			? Data.CreateConvertFunc<JSONNode, bool>()(n)
-			: _default;
 		
-		UnityAction<bool> setter = (v) => {
-			if (v == _default) {
-				Data.SetNode(Plugin.map_config.cinema_video, key, null);
-			}
-			else {
-				Data.SetNode(Plugin.map_config.cinema_video, key, v);
-			}
-			Plugin.map_config.Save();
-		};
+		var accessor = ConfigField<bool>(key);
 		
 		return (line.GetComponentInChildren<Toggle>() is Toggle toggle)
-			? UI.UpdateCheckbox(toggle, value, setter)
-			: UI.AddCheckbox(line, value, setter);
+			? UI.UpdateCheckbox(toggle, accessor.Get(), accessor.Set)
+			: UI.AddCheckbox(line, accessor.Get(), accessor.Set);
 	}
 	
 	private UIDropdown MakeDropdown<T>(string label, string key, Map<T?> type, bool nullable = false, string tooltip = "") {
 		var line = MakeLine(label, null, tooltip);
 		
-		var value = (Data.GetNode(Plugin.map_config!.cinema_video, key) is JSONNode n)
-			? Data.CreateConvertFunc<JSONNode, T>()(n)
-			: default!;
+		var accessor = ConfigField<T?>(key);
 		
-		UnityAction<T?> setter = Setter<T?>(key);
-		
-		return UI.SingleDropdown(line, value, setter, type, nullable);
+		return UI.SingleDropdown(line, accessor.Get(), accessor.Set, type, nullable);
 	}
 	
 	private Textbox MakeTextbox(string label, string key, string tooltip = "") {
 		var line = MakeLine(label, null, tooltip);
+		
 		var value = (string)Plugin.map_config![key];
 		Textbox.Setter setter = (string? v) => {
 			Debug.Log("Setting?");
@@ -185,29 +171,29 @@ internal class OptionsWindow : UIWindow {
 			?? Textbox.Create(line, false);
 		UI.AttachTransform(input.gameObject, new Vector2(0, 0), new Vector2(0, 0), new Vector2(0.5f, 0), new Vector2(1, 1));
 		
-		var value = (Data.GetNode(Plugin.map_config!.cinema_video, key) is JSONNode n)
-			? Data.CreateConvertFunc<JSONNode, T>()(n)
-			: (T?)null;
-		UnityAction<T?> setter = Setter<T?>(key);
+		var accessor = ConfigField<T?>(key) + Data.TextParser<T>();
 		
-		return UI.UpdateParsed<T>(input, value, false, setter);
+		return input.Set(accessor.Get(), false, accessor.Set);
 	}
 	
-	private UnityAction<T?> Setter<T>(string key) {
-		return (T? v) => {
-			if (v is T value) {
-				Data.SetNode(Plugin.map_config!.cinema_video, key, Data.CreateConvertFunc<T, SimpleJSON.JSONNode>()(value));
+	private Accessor<JSONNode?> ConfigField(string key)
+		=> new(
+			() => Data.GetNode(Plugin.map_config!.cinema_video, key),
+			(v) => {
+				if (v is JSONNode n) {
+					Data.SetNode(Plugin.map_config!.cinema_video, key, n);
+				}
+				else {
+					Data.RemoveNode(Plugin.map_config!.cinema_video, key);
+				}
 			}
-			else {
-				Data.RemoveNode(Plugin.map_config!.cinema_video, key);
-			}
-			Debug.Log($"Updated {key}!");
-			Plugin.map_config.Save();
-		};
-	}
+		);
+	
+	private Accessor<T?> ConfigField<T>(string key)
+		=> ConfigField(key) + Data.JSONValue<T?>();
 	
 	private void MakeVector3(string name, string key, string tooltip = "") {
-		AddExpando(name, name, false, tooltip, false);
+		Expando(name, name, false, tooltip, false);
 		
 		current_panel!.GetComponent<VerticalLayoutGroup>().padding = new RectOffset(5, 5, 0, 5);
 		
