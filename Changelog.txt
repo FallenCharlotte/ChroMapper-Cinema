@@ -1,3 +1,7 @@
+v1.0
+	Holy shit it can download videos!*
+	*Requires propedit, yt-dlp, and maybe ffmpeg
+
 v0.4.6
 	No more Chromper 11!
 	Correct for unit difference
