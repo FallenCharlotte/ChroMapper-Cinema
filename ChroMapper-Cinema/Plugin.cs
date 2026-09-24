@@ -1,4 +1,6 @@
-﻿using UnityEngine;
+﻿using System.Linq;
+
+using UnityEngine;
 using UnityEngine.SceneManagement;
 
 namespace ChroMapper_Cinema {
@@ -22,36 +24,46 @@ public class Plugin {
 		}
 		catch (System.Exception) { }
 		
+#if CHROMPER_13
+		LoadInitialMap.PlatformLoadedEvent += (p) => PlatformLoaded(p.gameObject);
+#else
+		SceneManager.sceneLoaded += SceneLoaded;
+#endif
+		
 		main_button = ExtensionButtons.AddButton(
 			Utils.LoadSprite("ChroMapper_Cinema.Resources.Icon.png"),
 			"Cinema",
 			controller.ButtonPress);
 		
-		LoadInitialMap.PlatformLoadedEvent += PlatformLoaded;
-		//SceneManager.sceneLoaded += SceneLoaded;
-		
 		Debug.Log("Cinema Plugin has loaded!");
 	}
 	
-	private void PlatformLoaded(PlatformDescriptor descriptor) {
-		var atsc = Object.FindObjectOfType<AudioTimeSyncController>();
-		controller!.Init(atsc, descriptor.gameObject);
-	}
-	/*
 	private void SceneLoaded(Scene scene, LoadSceneMode mode) {
 		if (scene.buildIndex == 3) {
-			if (enableUI) {
-				var mapEditorUI = Object.FindObjectOfType<MapEditorUI>();
-				controller!.MakeWindow(mapEditorUI);
-			}
+#if !CHROMPER_13
+			var context = Resources.FindObjectsOfTypeAll<BeatmapRuntimeContext>().FirstOrDefault();
 			
-			map_config!.Load();
+			context.OnEnvironmentLoaded += (d) => PlatformLoaded(d.gameObject);
+#endif
 		}
 	}
-	*/
+	
+	private void PlatformLoaded(GameObject platform) {
+		controller!.Init(platform);
+	}
+	
 	[Exit]
 	private void Exit() {
 		
+	}
+	
+	// For extra debug logging that shouldn't be included in releases
+	public static void Trace(object message) {
+//#if EXTRA_LOGGING
+		var st = new System.Diagnostics.StackTrace(true);
+		var caller = st.GetFrame(1);
+		Debug.Log($"{caller.GetFileName()}:{caller.GetFileLineNumber()} {message}");
+//#endif
 	}
 }
 

@@ -63,10 +63,11 @@ public class MapConfig {
 		switch (Application.platform) {
 		case RuntimePlatform.LinuxEditor:
 		case RuntimePlatform.LinuxPlayer:
-			video_file = video_file.Replace(".mp4", ".webm");
+			video_file += ".webm";
 			break;
 		}
 		
+		Plugin.Trace($"{video_file} eixsts? {File.Exists(video_file)}");
 		if (!File.Exists(video_file)) {
 			var old_location = Path.Combine(map_dir, (string)cinema_video["videoFile"]);
 			if (File.Exists(old_location)) {
@@ -76,7 +77,7 @@ public class MapConfig {
 		}
 		
 		video_downloaded = File.Exists(video_file);
-		Debug.Log($"video_downloaded: {video_downloaded}");
+		Plugin.Trace($"video_downloaded: {video_downloaded}");
 	}
 	
 	public JSONNode this[string key] {

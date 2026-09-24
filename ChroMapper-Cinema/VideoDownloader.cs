@@ -30,14 +30,14 @@ public class VideoDownloader {
 		// Check local folder
 		if (File.Exists(local_path)) {
 			ytdlp_path = local_path;
-			Debug.Log("Using local " + PlatformFilename());
+			Plugin.Trace("Using local " + PlatformFilename());
 			return;
 		}
 		
 		// Check Beat Saber folder
 		if (File.Exists(bs_path)) {
 			ytdlp_path = bs_path;
-			Debug.Log("Using Beat Saber " + PlatformFilename());
+			Plugin.Trace("Using Beat Saber " + PlatformFilename());
 			return;
 		}
 		
@@ -45,7 +45,7 @@ public class VideoDownloader {
 		try {
 			var p = System.Diagnostics.Process.Start("yt-dlp",  "--version");
 			ytdlp_path = "yt-dlp";
-			Debug.Log("Using system yt-dlp");
+			Plugin.Trace("Using system yt-dlp");
 			return;
 		}
 		catch(System.Exception) { }
@@ -72,7 +72,7 @@ public class VideoDownloader {
 			args += " --recode-video mp4";
 		}
 		
-		Debug.Log($"{downloader.ytdlp_path!} {args}");
+		Plugin.Trace($"\"{downloader.ytdlp_path!}\" {args}");
 		
 		var dl = new System.Diagnostics.Process();
 		dl.StartInfo.FileName = downloader.ytdlp_path!;
@@ -85,7 +85,7 @@ public class VideoDownloader {
 			if (String.IsNullOrWhiteSpace(outLine.Data)) return;
 			if (filename == null) {
 				Plugin.map_config!["videoFile"] = outLine.Data + ".mp4";
-				Debug.LogError($"videoFile: {outLine.Data}.mp4");
+				Plugin.Trace($"videoFile: {outLine.Data}.mp4");
 				Plugin.controller!.RefreshWindow();
 			}
 		};
@@ -94,7 +94,7 @@ public class VideoDownloader {
 			Debug.LogError($"[yt-dlp] {outLine.Data}");
 		};
 		dl.Exited += (object _, System.EventArgs _) => {
-			Debug.Log($"yt-dlp returned {dl.ExitCode}");
+			Plugin.Trace($"yt-dlp returned {dl.ExitCode}");
 			Plugin.map_config!.TryVideo();
 			Plugin.controller!.LoadVideo();
 		};
