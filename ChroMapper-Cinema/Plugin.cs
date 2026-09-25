@@ -38,15 +38,15 @@ public class Plugin {
 		Debug.Log("Cinema Plugin has loaded!");
 	}
 	
+#if !CHROMPER_13
 	private void SceneLoaded(Scene scene, LoadSceneMode mode) {
 		if (scene.buildIndex == 3) {
-#if !CHROMPER_13
 			var context = Resources.FindObjectsOfTypeAll<BeatmapRuntimeContext>().FirstOrDefault();
 			
 			context.OnEnvironmentLoaded += (d) => PlatformLoaded(d.gameObject);
-#endif
 		}
 	}
+#endif
 	
 	private void PlatformLoaded(GameObject platform) {
 		controller!.Init(platform);

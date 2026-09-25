@@ -14,7 +14,6 @@ public class CinemaController {
 	private AudioTimeSyncController? atsc = null;
 	
 	public bool showPlayer = false;
-	private GameObject? parent;
 	private GameObject? screen;
 	private VideoPlayer? player;
 	private string platform = "";
@@ -28,14 +27,17 @@ public class CinemaController {
 	}
 	
 	public void Init(GameObject platform) {
-		this.parent = platform;
+		Plugin.Trace($"CinemaController.Init({platform})");
 		this.atsc = Object.FindObjectOfType<AudioTimeSyncController>();
 		
 		this.platform = BeatSaberSongContainer.Instance.Info.EnvironmentName;
-		Debug.Log($"Platform: {this.platform}");
+		Plugin.Trace($"Platform: {this.platform}");
 		
+		if (screen != null) {
+			GameObject.Destroy(screen);
+		}
 		screen = new GameObject("Cinema Screen");
-		screen.transform.SetParent(parent.transform);
+		screen.transform.SetParent(platform.transform);
 		screen.SetActive(false);
 		
 		var mesh = new Mesh();
@@ -61,7 +63,7 @@ public class CinemaController {
 		player.prepareCompleted += (VideoPlayer p) => {
 			var scale = new Vector2(plat_settings.height / p.height * p.width, plat_settings.height);
 			Utils.SetTransform(screen, plat_settings.pos * 1.667f, scale * 1.667f, plat_settings.rotation);
-			Debug.Log("Cinema prepared: " + (p.isPrepared ? "true" : "false"));
+			Plugin.Trace("Cinema prepared: " + (p.isPrepared ? "true" : "false"));
 			showPlayer = true;
 			playing = false;
 			
