@@ -1,3 +1,7 @@
+v1.0.1
+	No double webm on linux
+	Fix the tiny secret screen
+
 v1.0
 	Holy shit it can download videos!*
 	*Requires propedit, yt-dlp, and maybe ffmpeg
