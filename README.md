@@ -1,19 +1,32 @@
 # ChroMapper-Cinema
 Cinema Viewer in ChroMapper
 
-On Linux, only plays .webm with vp8 because Unity is bad :( Works in proton,tho.
+On Linux, converts mp4 to vp8 because Unity is bad :( This makes downloads very slow.
+
+## Dependencies:
+
+Downloading videos, particularly from youtube, requires a full yt-dlp+ffmpeg+deno setup. The easiest way to get this set up is with a package manager:
+
+- **Windows:** [winget](https://learn.microsoft.com/en-us/windows/package-manager/winget/), install command:
+```cmd
+winget install --source winget --id yt-dlp.yt-dlp
+```
+
+- **MacOS:** [Homebrew](https://brew.sh/), install command:
+```sh
+brew install yt-dlp
+```
+
+- **Linux:** You should know this
 
 ## Done:
 
 - [x] Play/Pause/Seek
 - [x] Playback speed
 - [x] Toggle button
+- [x] Add video / edit offset (better sync tool TODO)
+- [x] Ffmpeg duct-tape for native linux playback
 
 ## Maybe TODO?
 
-- [ ] Add video / edit offset?
-
-## I won't do it, but you can
-
 - [ ] Cinema's environment changes
-- [ ] Ffmpeg duct-tape for native linux playback
