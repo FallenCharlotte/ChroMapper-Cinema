@@ -28,27 +28,31 @@ public class VideoDownloader {
 		var local_path = Path.Combine(Directory.GetCurrentDirectory(), TOOLS_DIR, PlatformFilename());
 		
 		// Check local folder
-		if (File.Exists(local_path)) {
+		if (File.Exists(local_path)) try {
+			Run(local_path, "--version", (line) => {
+				Plugin.Trace($"Using local {PlatformFilename()}: {line}");
+			});
 			ytdlp_path = local_path;
-			Plugin.Trace("Using local " + PlatformFilename());
 			return;
-		}
+		} catch(System.Exception) { }
 		
 		// Check Beat Saber folder
-		if (File.Exists(bs_path)) {
+		if (File.Exists(bs_path)) try {
+			Run(bs_path, "--version", (line) => {
+				Plugin.Trace("Using Beat Saber {PlatformFilename()}: {line}");
+			});
 			ytdlp_path = bs_path;
-			Plugin.Trace("Using Beat Saber " + PlatformFilename());
 			return;
-		}
+		} catch(System.Exception) { }
 		
 		// Check if it's in PATH
 		try {
-			var p = System.Diagnostics.Process.Start("yt-dlp",  "--version");
+			Run("yt-dlp", "--version", (line) => {
+				Plugin.Trace($"Using system yt-dlp: {line}");
+			});
 			ytdlp_path = "yt-dlp";
-			Plugin.Trace("Using system yt-dlp");
 			return;
-		}
-		catch(System.Exception) { }
+		} catch(System.Exception) { }
 	}
 	
 	public static void DownloadVideo(string url, string folder, string? filename = null) {
@@ -63,7 +67,16 @@ public class VideoDownloader {
 			? "-o \"%(title)s.%(ext)s\""
 			: $"-o \"{filename}\"";
 		
-		var args = $"-P \"{folder}\" -O \"%(title)s\" --no-simulate {out_arg} \"{url}\"";
+		if (String.IsNullOrWhiteSpace(filename)) {
+			Plugin.Trace($"Getting filename: \"{downloader.ytdlp_path!}\" {out_arg} -O \"%(title)s\" \"{url}\"");
+			Run(downloader.ytdlp_path!, $"{out_arg} -O \"%(title)s\" \"{url}\"", (line) => {
+				Plugin.map_config!["videoFile"] = line + ".mp4";
+				Plugin.Trace($"videoFile: {line}.mp4");
+				Plugin.controller!.RefreshWindow();
+			});
+		};
+		
+		var args = $"-P \"{folder}\" {out_arg} \"{url}\"";
 		
 		if (Application.platform == RuntimePlatform.LinuxEditor || Application.platform == RuntimePlatform.LinuxPlayer) {
 			args += " --merge-output-format mkv --recode-video webm --postprocessor-args 'VideoConvertor:-vcodec vp8 -acodec libvorbis'";
@@ -72,36 +85,55 @@ public class VideoDownloader {
 			args += " --recode-video mp4";
 		}
 		
-		Plugin.Trace($"\"{downloader.ytdlp_path!}\" {args}");
+		Plugin.Trace($"Downloading: \"{downloader.ytdlp_path!}\" {args}");
 		
-		var dl = new System.Diagnostics.Process();
-		dl.StartInfo.FileName = downloader.ytdlp_path!;
-		dl.StartInfo.Arguments = args;
-		dl.StartInfo.UseShellExecute = false;
-		dl.StartInfo.RedirectStandardOutput = true;
-		dl.StartInfo.RedirectStandardError = true;
-		dl.StartInfo.EnvironmentVariables["TMP"] = (new DirectoryInfo(TOOLS_DIR)).FullName;
-		dl.OutputDataReceived += (object _, System.Diagnostics.DataReceivedEventArgs outLine) => {
-			if (String.IsNullOrWhiteSpace(outLine.Data)) return;
-			if (filename == null) {
-				Plugin.map_config!["videoFile"] = outLine.Data + ".mp4";
-				Plugin.Trace($"videoFile: {outLine.Data}.mp4");
-				Plugin.controller!.RefreshWindow();
+		Run(
+			downloader.ytdlp_path!,
+			args,
+			(line) => {
+				if (line.Contains("[download]")) {
+					// TODO: Show progress bar
+				}
+			},
+			(line) => {
+				Debug.LogError($"[yt-dlp] {line}");
+			},
+			(proc) => {
+				if (proc.ExitCode == 0) {
+					Plugin.Trace($"Download successful!");
+					Plugin.map_config!.TryVideo();
+					Plugin.controller!.LoadVideo();
+				}
+				else {
+					Debug.LogError("Download failed!");
+				}
 			}
+		);
+	}
+	
+	private static void Run(string cmd, string args, Action<string>? outputCallback = null, Action<string>? errorCallback = null, Action<System.Diagnostics.Process>? exitCallback = null) {
+		var p = new System.Diagnostics.Process();
+		p.StartInfo.FileName = cmd;
+		p.StartInfo.Arguments = args;
+		p.StartInfo.UseShellExecute = (outputCallback == null && errorCallback == null);
+		p.StartInfo.RedirectStandardOutput = (outputCallback != null);
+		p.StartInfo.RedirectStandardError = (errorCallback != null);
+		p.EnableRaisingEvents = (exitCallback != null);
+		p.StartInfo.EnvironmentVariables["TMP"] = (new DirectoryInfo(TOOLS_DIR)).FullName;
+		if (outputCallback != null) p.OutputDataReceived += (_, line) => {
+			if (String.IsNullOrWhiteSpace(line.Data)) return;
+			outputCallback(line.Data);
 		};
-		dl.ErrorDataReceived += (object _, System.Diagnostics.DataReceivedEventArgs outLine) => {
-			if (String.IsNullOrWhiteSpace(outLine.Data)) return;
-			Debug.LogError($"[yt-dlp] {outLine.Data}");
+		if (errorCallback != null) p.ErrorDataReceived += (_, line) => {
+			if (String.IsNullOrWhiteSpace(line.Data)) return;
+			errorCallback(line.Data);
 		};
-		dl.Exited += (object _, System.EventArgs _) => {
-			Plugin.Trace($"yt-dlp returned {dl.ExitCode}");
-			Plugin.map_config!.TryVideo();
-			Plugin.controller!.LoadVideo();
+		if (exitCallback != null) p.Exited += (sender, _) => {
+			exitCallback((System.Diagnostics.Process)sender);
 		};
-		dl.EnableRaisingEvents = true;
-		dl.Start();
-		dl.BeginOutputReadLine();
-		dl.BeginErrorReadLine();
+		p.Start();
+		if (outputCallback != null) p.BeginOutputReadLine();
+		if (errorCallback != null) p.BeginErrorReadLine();
 	}
 };
 
