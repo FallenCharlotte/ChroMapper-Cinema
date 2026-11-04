@@ -60,15 +60,6 @@ public class MapConfig {
 		
 		video_file = Path.Combine(video_dir, (string)cinema_video["videoFile"]);
 		
-		switch (Application.platform) {
-		case RuntimePlatform.LinuxEditor:
-		case RuntimePlatform.LinuxPlayer:
-			if (!video_file.EndsWith(".webm")) {
-				video_file += ".webm";
-			}
-			break;
-		}
-		
 		Plugin.Trace($"{video_file} eixsts? {File.Exists(video_file)}");
 		if (!File.Exists(video_file)) {
 			var old_location = Path.Combine(map_dir, (string)cinema_video["videoFile"]);

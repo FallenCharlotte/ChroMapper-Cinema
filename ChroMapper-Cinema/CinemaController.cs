@@ -15,7 +15,7 @@ public class CinemaController {
 	
 	public bool showPlayer = false;
 	private GameObject? screen;
-	private VideoPlayer? player;
+	private GStreamerVideoComponent? player;
 	private string platform = "";
 	private PlatformSettings plat_settings;
 	
@@ -28,7 +28,7 @@ public class CinemaController {
 	
 	public void Init(GameObject platform) {
 		Plugin.Trace($"CinemaController.Init({platform})");
-		this.atsc = Object.FindObjectOfType<AudioTimeSyncController>();
+		this.atsc = Object.FindAnyObjectByType<AudioTimeSyncController>();
 		
 		this.platform = BeatSaberSongContainer.Instance.Info.EnvironmentName;
 		Plugin.Trace($"Platform: {this.platform}");
@@ -53,27 +53,7 @@ public class CinemaController {
 		mat.SetFloat("_ColorMask", 14.0f); // No idea what this means but it looks fine
 		screen.AddComponent<MeshRenderer>().material = mat;
 		
-		player = screen.AddComponent<VideoPlayer>();
-		player.errorReceived += (VideoPlayer p, string msg) => {
-			showPlayer = false;
-			screen.SetActive(false);
-			TryRefreshWindow();
-			throw new System.Exception(msg);
-		};
-		player.prepareCompleted += (VideoPlayer p) => {
-			var scale = new Vector2(plat_settings.height / p.height * p.width, plat_settings.height);
-			Utils.SetTransform(screen, plat_settings.pos * 1.667f, scale * 1.667f, plat_settings.rotation);
-			Plugin.Trace("Cinema prepared: " + (p.isPrepared ? "true" : "false"));
-			showPlayer = true;
-			playing = false;
-			
-			TryRefreshWindow();
-			
-			OnTimeChanged();
-		};
-		player.seekCompleted += AfterSeek;
-		player.playOnAwake = true;
-		player.audioOutputMode = VideoAudioOutputMode.None;
+		player = screen.AddComponent<GStreamerVideoComponent>();
 		
 #if CHROMPER_13
 		atsc.TimeChanged += OnTimeChanged;
@@ -83,7 +63,7 @@ public class CinemaController {
 		Settings.NotifyBySettingName("SongSpeed", UpdateSongSpeed);
 		
 		if (Plugin.enableUI) {
-			var mapEditorUI = Object.FindObjectOfType<MapEditorUI>();
+			var mapEditorUI = Object.FindAnyObjectByType<MapEditorUI>();
 			MakeWindow(mapEditorUI);
 		}
 		
@@ -122,8 +102,18 @@ public class CinemaController {
 		
 		screen!.SetActive(true);
 		
-		player!.url = Plugin.map_config!.video_file!;
-		player!.Prepare();
+		player!.VideoPath = Plugin.map_config!.video_file!;
+		player!.Open();
+		
+		var scale = new Vector2(plat_settings.height / 9 * 16 /*p.height * p.width*/, plat_settings.height);
+		Utils.SetTransform(screen, plat_settings.pos * 1.667f, scale * 1.667f, plat_settings.rotation);
+		
+		showPlayer = true;
+		playing = false;
+		
+		TryRefreshWindow();
+		
+		OnTimeChanged();
 		
 		return "";
 	}
@@ -164,7 +154,7 @@ public class CinemaController {
 	
 	public void ToggleEnabled() {
 		if (showPlayer) {
-			player!.Stop();
+			player!.Player!.Pause();
 			screen!.SetActive(false);
 			showPlayer = false;
 			TryRefreshWindow();
@@ -184,7 +174,7 @@ public class CinemaController {
 		
 		// Causes lag when playing
 		if (!playing) {
-			player!.time = time;
+			player!.Seek(System.Math.Max(0, time));
 		}
 		
 		if (atsc.IsPlaying && !playing && time >= 0) {
@@ -199,15 +189,9 @@ public class CinemaController {
 	}
 	
 	private void UpdateSongSpeed(object obj) {
-		if (!showPlayer) return;
+		if (player == null) return;
 		
-		player!.playbackSpeed = ((float)obj) / 10.0f;
-	}
-	
-	private void AfterSeek(VideoPlayer player) {
-		if (!playing) {
-			player.StepForward();
-		}
+		player!.SetRate(((float)obj) / 10.0f);
 	}
 }
 

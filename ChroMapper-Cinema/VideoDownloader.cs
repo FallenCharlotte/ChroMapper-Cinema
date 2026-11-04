@@ -76,14 +76,7 @@ public class VideoDownloader {
 			});
 		};
 		
-		var args = $"-P \"{folder}\" {out_arg} \"{url}\"";
-		
-		if (Application.platform == RuntimePlatform.LinuxEditor || Application.platform == RuntimePlatform.LinuxPlayer) {
-			args += " --merge-output-format mkv --recode-video webm --postprocessor-args 'VideoConvertor:-vcodec vp8 -acodec libvorbis'";
-		}
-		else {
-			args += " --recode-video mp4";
-		}
+		var args = $"-P \"{folder}\" -f bestvideo[vcodec*=avc1]+bestaudio[acodec*=mp4] --no-cache-dir --recode-video mp4 --no-part --no-mtime {out_arg} \"{url}\"";
 		
 		Plugin.Trace($"Downloading: \"{downloader.ytdlp_path!}\" {args}");
 		
@@ -119,7 +112,6 @@ public class VideoDownloader {
 		p.StartInfo.RedirectStandardOutput = (outputCallback != null);
 		p.StartInfo.RedirectStandardError = (errorCallback != null);
 		p.EnableRaisingEvents = (exitCallback != null);
-		p.StartInfo.EnvironmentVariables["TMP"] = (new DirectoryInfo(TOOLS_DIR)).FullName;
 		if (outputCallback != null) p.OutputDataReceived += (_, line) => {
 			if (String.IsNullOrWhiteSpace(line.Data)) return;
 			outputCallback(line.Data);
