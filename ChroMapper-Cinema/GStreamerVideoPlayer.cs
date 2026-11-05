@@ -11,8 +11,8 @@ public sealed class GStreamerVideoPlayer : IDisposable
 {
     public enum PlaybackState { Opening, Paused, Playing, Seeking, Ended, Error }
     
-    public int Width { get; private set; } = 0;
-    public int Height { get; private set; } = 0;
+    public uint Width { get; private set; } = 0;
+    public uint Height { get; private set; } = 0;
     
     public readonly UnityEvent OnResize = new();
 
@@ -181,11 +181,11 @@ public sealed class GStreamerVideoPlayer : IDisposable
         Width = state.Width;
         Height = state.Height;
         
-        rowBytes = checked(Width * 4);
-        frameBytes = checked(rowBytes * Height);
+        rowBytes = checked((int)Width * 4);
+        frameBytes = checked(rowBytes * (int)Height);
         
         pixels = Marshal.AllocHGlobal(frameBytes);
-        Texture = new Texture2D(Width, Height, TextureFormat.RGBA32, false, !isSrgb)
+        Texture = new Texture2D((int)Width, (int)Height, TextureFormat.RGBA32, false, !isSrgb)
         {
             name = "Bundled video", wrapMode = TextureWrapMode.Clamp, filterMode = FilterMode.Bilinear
         };
@@ -281,7 +281,7 @@ public sealed class GStreamerVideoPlayer : IDisposable
     public struct PlaybackSnapshot
     {
         public PlaybackState State;
-        public int Width, Height;
+        public uint Width, Height;
         public int DesiredPlaying, HasFrame, ErrorCode;
         public ulong Generation, CompletedGeneration, FrameSerial;
         public long TimeMilliseconds, DurationMilliseconds;

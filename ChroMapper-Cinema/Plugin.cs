@@ -59,11 +59,11 @@ public class Plugin {
 	
 	// For extra debug logging that shouldn't be included in releases
 	public static void Trace(object message) {
-//#if EXTRA_LOGGING
+#if EXTRA_LOGGING
 		var st = new System.Diagnostics.StackTrace(true);
 		var caller = st.GetFrame(1);
 		Debug.Log($"{caller.GetFileName()}:{caller.GetFileLineNumber()} {message}");
-//#endif
+#endif
 	}
 }
 

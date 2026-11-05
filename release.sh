@@ -39,8 +39,15 @@ git tag "${tag}"
 dotnet build
 dotnet build -p:DefineConstants="CHROMPER_13"
 
+pushd "Lib/cmv_gstreamer"
+./build.sh
+mkdir -p ../$PROJECT/bin/Stable/ChroMapper_Data/Plugins/
+cp libcmv_gstreamer.so ../$PROJECT/bin/Stable/ChroMapper_Data/Plugins/
+popd
+
 pushd $PROJECT/bin/Stable
 zip "ChroMapper-13-Cinema ${tag}.zip" Plugins/$PROJECT.dll
+zip "ChroMapper-libCMV.zip" ChroMapper_Data/Plugins/libcmv_gstreamer.so
 popd
 
 pushd $PROJECT/bin/Dev

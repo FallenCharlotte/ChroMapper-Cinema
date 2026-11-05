@@ -31,8 +31,8 @@ typedef enum cmv_gst_audio_mode {
 
 typedef struct cmv_gst_snapshot {
     int32_t state;
-    int32_t width;
-    int32_t height;
+    uint32_t width;
+    uint32_t height;
     int32_t desired_playing;
     int32_t has_frame;
     int32_t error_code;
