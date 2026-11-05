@@ -3,52 +3,49 @@ using System.IO;
 using System.Runtime.InteropServices;
 using System.Text;
 using UnityEngine;
+using UnityEngine.Events;
 using Object = UnityEngine.Object;
 
 /// <summary>Decodes original local media. All managed calls and texture uploads belong to Unity's main thread.</summary>
 public sealed class GStreamerVideoPlayer : IDisposable
 {
     public enum PlaybackState { Opening, Paused, Playing, Seeking, Ended, Error }
+    
+    public int Width { get; private set; } = 0;
+    public int Height { get; private set; } = 0;
+    
+    public readonly UnityEvent OnResize = new();
 
     private const string Library = "cmv_gstreamer";
     private const string RuntimeVersion = "1.28.8";
     private const int ErrorCapacity = 2048;
     private static bool configured;
-    private readonly int frameBytes;
-    private readonly int rowBytes;
+    private int frameBytes;
+    private int rowBytes;
     private string? error;
     private bool? muted;
+    private bool isSrgb;
     private IntPtr pixels;
     private IntPtr player;
     private ulong uploadedSerial;
     private float volume = float.NaN;
 
-    public GStreamerVideoPlayer(string path, int width, int height, bool isSrgb, bool enableAudio)
+    public GStreamerVideoPlayer(string path, bool isSrgb, bool enableAudio)
     {
         if (!File.Exists(path)) throw new FileNotFoundException("Video source was not found.", path);
-        if (width <= 0) throw new ArgumentOutOfRangeException(nameof(width));
-        if (height <= 0) throw new ArgumentOutOfRangeException(nameof(height));
-        rowBytes = checked(width * 4);
-        frameBytes = checked(rowBytes * height);
         ConfigureRuntime();
+        this.isSrgb = isSrgb;
         try
         {
             var message = new byte[ErrorCapacity];
             if (cmv_gst_create(
                     path,
-                    width,
-                    height,
                     enableAudio ? 1 : 0,
                     out player,
                     message,
                     (ulong)message.Length)
                 == 0)
                 throw new InvalidOperationException(DecodeError(message));
-            pixels = Marshal.AllocHGlobal(frameBytes);
-            Texture = new Texture2D(width, height, TextureFormat.RGBA32, false, !isSrgb)
-            {
-                name = "Bundled video", wrapMode = TextureWrapMode.Clamp, filterMode = FilterMode.Bilinear
-            };
         }
         catch
         {
@@ -172,6 +169,31 @@ public sealed class GStreamerVideoPlayer : IDisposable
         cmv_gst_set_volume(player, value);
         volume = value;
     }
+    
+    public bool Resize() {
+        if (pixels != IntPtr.Zero) Marshal.FreeHGlobal(pixels);
+        pixels = IntPtr.Zero;
+        if (Texture != null) Object.Destroy(Texture);
+        Texture = null;
+        
+        var state = GetSnapshot();
+        if (state.Width <= 0 || state.Height <= 0) return false;
+        Width = state.Width;
+        Height = state.Height;
+        
+        rowBytes = checked(Width * 4);
+        frameBytes = checked(rowBytes * Height);
+        
+        pixels = Marshal.AllocHGlobal(frameBytes);
+        Texture = new Texture2D(Width, Height, TextureFormat.RGBA32, false, !isSrgb)
+        {
+            name = "Bundled video", wrapMode = TextureWrapMode.Clamp, filterMode = FilterMode.Bilinear
+        };
+        
+        OnResize.Invoke();
+        
+        return true;
+    }
 
     public bool TryUploadFrame()
     {
@@ -214,8 +236,6 @@ public sealed class GStreamerVideoPlayer : IDisposable
     [DllImport(Library, CallingConvention = CallingConvention.Cdecl)]
     private static extern int cmv_gst_create(
         [MarshalAs(UnmanagedType.LPUTF8Str)] string path,
-        int width,
-        int height,
         int audioMode,
         out IntPtr player,
         [Out] byte[] error,
@@ -261,6 +281,7 @@ public sealed class GStreamerVideoPlayer : IDisposable
     public struct PlaybackSnapshot
     {
         public PlaybackState State;
+        public int Width, Height;
         public int DesiredPlaying, HasFrame, ErrorCode;
         public ulong Generation, CompletedGeneration, FrameSerial;
         public long TimeMilliseconds, DurationMilliseconds;

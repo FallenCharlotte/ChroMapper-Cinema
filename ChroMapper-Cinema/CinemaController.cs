@@ -104,16 +104,17 @@ public class CinemaController {
 		
 		player!.VideoPath = Plugin.map_config!.video_file!;
 		player!.Open();
-		
-		var scale = new Vector2(plat_settings.height / 9 * 16 /*p.height * p.width*/, plat_settings.height);
-		Utils.SetTransform(screen, plat_settings.pos * 1.667f, scale * 1.667f, plat_settings.rotation);
-		
-		showPlayer = true;
-		playing = false;
-		
-		TryRefreshWindow();
-		
-		OnTimeChanged();
+		player.Player!.OnResize.AddListener(() => {
+			var scale = new Vector2(plat_settings.height / player.Player!.Height * player.Player!.Width, plat_settings.height);
+			Utils.SetTransform(screen, plat_settings.pos * 1.667f, scale * 1.667f, plat_settings.rotation);
+			
+			showPlayer = true;
+			playing = false;
+			
+			TryRefreshWindow();
+			
+			OnTimeChanged();
+		});
 		
 		return "";
 	}

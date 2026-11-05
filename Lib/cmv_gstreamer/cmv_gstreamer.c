@@ -90,6 +90,7 @@ static gboolean initialize_gstreamer(char **error)
             initialization_error = g_strdup("GStreamer was initialized before its private paths were configured.");
         } else {
             char *saved[G_N_ELEMENTS(keys)];
+#ifndef SYSTEM_GST
             for (guint i = 0; i < G_N_ELEMENTS(keys); ++i) saved[i] = g_strdup(g_getenv(keys[i]));
             g_setenv(keys[0], private_plugins, TRUE); g_setenv(keys[1], private_plugins, TRUE);
             g_setenv(keys[2], "", TRUE); g_setenv(keys[3], "", TRUE);
@@ -99,6 +100,7 @@ static gboolean initialize_gstreamer(char **error)
             } else {
                 g_setenv(keys[8], "no", TRUE);
             }
+#endif
             GError *gst_error = NULL;
             initialization_ok = gst_init_check(NULL, NULL, &gst_error);
             if (!initialization_ok) {
@@ -158,11 +160,14 @@ static GstPadProbeReturn sink_probe(GstPad *pad, GstPadProbeInfo *info, gpointer
             GstCaps *caps;
             gst_event_parse_caps(event, &caps);
             p->have_video_info = gst_video_info_from_caps(&p->video_info, caps);
-            if (!p->have_video_info || GST_VIDEO_INFO_FORMAT(&p->video_info) != GST_VIDEO_FORMAT_RGBA
-                || GST_VIDEO_INFO_WIDTH(&p->video_info) != p->width
-                || GST_VIDEO_INFO_HEIGHT(&p->video_info) != p->height) {
+            if (!p->have_video_info || GST_VIDEO_INFO_FORMAT(&p->video_info) != GST_VIDEO_FORMAT_RGBA) {
                 fail_locked(p, "Video sink did not negotiate the authored coded RGBA dimensions.");
             }
+            p->width = GST_VIDEO_INFO_WIDTH(&p->video_info);
+            p->height = GST_VIDEO_INFO_HEIGHT(&p->video_info);
+            p->row_bytes = (gsize)p->width * 4;
+            p->pixels = g_try_malloc(p->row_bytes * p->height);
+            if (!p->pixels) { fail_locked(p, "Unable to allocate the RGBA video frame."); }
             break;
         }
         case GST_EVENT_EOS:
@@ -358,9 +363,9 @@ static gboolean build_pipeline(cmv_gst_player *p)
     p->pipeline = gst_element_factory_make("playbin", NULL);
     if (!p->pipeline) { fail(p, "The private GStreamer playback plugin is missing."); return FALSE; }
     p->setup_handler = g_signal_connect(p->pipeline, "element-setup", G_CALLBACK(element_setup), p);
-    gchar *description = g_strdup_printf("queue max-size-buffers=1 max-size-bytes=0 max-size-time=0 ! "
-        "videoconvert ! videoscale ! video/x-raw,format=RGBA,width=%d,height=%d ! "
-        "appsink name=cmv_frames sync=true max-buffers=1 drop=true wait-on-eos=false", p->width, p->height);
+    gchar *description = g_strdup("queue max-size-buffers=1 max-size-bytes=0 max-size-time=0 ! "
+        "videoconvert ! video/x-raw,format=RGBA ! "
+        "appsink name=cmv_frames sync=true max-buffers=1 drop=true wait-on-eos=false");
     GError *parse_error = NULL;
     GstElement *bin = gst_parse_bin_from_description(description, TRUE, &parse_error);
     g_free(description);
@@ -519,22 +524,19 @@ cleanup:
     return NULL;
 }
 
-int32_t cmv_gst_create(const char *path, int32_t width, int32_t height,
+int32_t cmv_gst_create(const char *path,
     int32_t audio_mode, cmv_gst_player **out, char *error, uint64_t capacity)
 {
     if (out) *out = NULL;
-    if (!path || !*path || !out || width <= 0 || height <= 0
-        || (audio_mode != CMV_GST_AUDIO_NONE && audio_mode != CMV_GST_AUDIO_DIRECT)
-        || (gsize)width > G_MAXSIZE / 4 / (gsize)height) {
-        copy_error(error, capacity, "Invalid video path, dimensions or audio mode."); return 0;
+    if (!path || !*path || !out
+        || (audio_mode != CMV_GST_AUDIO_NONE && audio_mode != CMV_GST_AUDIO_DIRECT)) {
+        copy_error(error, capacity, "Invalid video path or audio mode."); return 0;
     }
     cmv_gst_player *p = g_try_new0(cmv_gst_player, 1);
     if (!p) { copy_error(error, capacity, "Unable to allocate a video player."); return 0; }
-    p->row_bytes = (gsize)width * 4;
-    p->pixels = g_try_malloc(p->row_bytes * height);
-    if (!p->pixels) { g_free(p); copy_error(error, capacity, "Unable to allocate the RGBA video frame."); return 0; }
     g_mutex_init(&p->lock); g_cond_init(&p->wake);
-    p->path = g_strdup(path); p->width = width; p->height = height; p->audio_mode = audio_mode;
+    p->path = g_strdup(path); p->audio_mode = audio_mode;
+    p->width = p->height = 0;
     p->rate = 1; p->volume = 1; p->generation = 1;
     p->snapshot.state = CMV_GST_OPENING;
     GError *thread_error = NULL;
@@ -616,6 +618,8 @@ int32_t cmv_gst_get_snapshot(cmv_gst_player *p, cmv_gst_snapshot *snapshot)
     if (!p || !snapshot) return 0;
     g_mutex_lock(&p->lock);
     *snapshot = p->snapshot;
+    snapshot->width = p->width;
+    snapshot->height = p->height;
     snapshot->desired_playing = p->desired_playing;
     snapshot->has_frame = p->frame.serial != 0 && p->frame.generation == p->generation;
     snapshot->generation = p->generation; snapshot->completed_generation = p->completed_generation;

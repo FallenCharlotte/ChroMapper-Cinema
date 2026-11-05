@@ -31,6 +31,8 @@ typedef enum cmv_gst_audio_mode {
 
 typedef struct cmv_gst_snapshot {
     int32_t state;
+    int32_t width;
+    int32_t height;
     int32_t desired_playing;
     int32_t has_frame;
     int32_t error_code;
@@ -64,8 +66,8 @@ CMV_GST_API int32_t cmv_gst_configure(const char *plugin_dir,
 
 /* Create returns before preparation/decoding. Observe asynchronous errors with
  * get_snapshot/get_error. The file path and authored coded dimensions are copied. */
-CMV_GST_API int32_t cmv_gst_create(const char *file_path, int32_t width,
-    int32_t height, int32_t audio_mode, cmv_gst_player **out_player,
+CMV_GST_API int32_t cmv_gst_create(const char *file_path,
+    int32_t audio_mode, cmv_gst_player **out_player,
     char *error, uint64_t error_capacity);
 CMV_GST_API int32_t cmv_gst_play(cmv_gst_player *player);
 CMV_GST_API int32_t cmv_gst_pause(cmv_gst_player *player);

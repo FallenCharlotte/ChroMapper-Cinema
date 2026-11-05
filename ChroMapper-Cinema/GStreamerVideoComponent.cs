@@ -6,8 +6,6 @@ using UnityEngine;
 public sealed class GStreamerVideoComponent : MonoBehaviour
 {
     public string VideoPath = "sample.webm";
-    public int Width = 1920;
-    public int Height = 1080;
     public bool EnableAudio;
 
     public GStreamerVideoPlayer? Player { get; private set; }
@@ -26,14 +24,13 @@ public sealed class GStreamerVideoComponent : MonoBehaviour
         Close();
         var path = Path.IsPathRooted(VideoPath)
             ? VideoPath : Path.Combine(Application.streamingAssetsPath, VideoPath);
-        Player = new GStreamerVideoPlayer(path, Width, Height, true, EnableAudio);
+        Player = new GStreamerVideoPlayer(path, true, EnableAudio);
         try
         {
             output = GetComponent<Renderer>();
             originalMaterial = output.sharedMaterial;
             videoMaterial = new Material(originalMaterial);
             output.sharedMaterial = videoMaterial;
-            videoMaterial.mainTexture = Player.Texture;
         }
         catch (System.Exception e)
         {
@@ -52,12 +49,15 @@ public sealed class GStreamerVideoComponent : MonoBehaviour
     {
         if (Player == null) return;
         var state = Player.GetSnapshot();
-        //Debug.Log($"{state.State} {state.ErrorCode} {state.HasFrame} {state.DurationMilliseconds}");
         if (Player.State == GStreamerVideoPlayer.PlaybackState.Error)
         {
             Debug.LogError(Player.Error, this);
             Close();
             return;
+        }
+        if (videoMaterial!.mainTexture == null) {
+            if (Player.Resize()) videoMaterial.mainTexture = Player.Texture;
+            else return;
         }
         Player.TryUploadFrame();
     }
