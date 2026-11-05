@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Text.RegularExpressions;
 
 using UnityEngine;
 
@@ -80,12 +81,14 @@ public class VideoDownloader {
 		
 		Plugin.Trace($"Downloading: \"{downloader.ytdlp_path!}\" {args}");
 		
+		var download_label = (Plugin.controller!.options_window as OptionsWindow)!.download_label!;
+		
 		Run(
 			downloader.ytdlp_path!,
 			args,
 			(line) => {
 				if (line.Contains("[download]")) {
-					// TODO: Show progress bar
+					download_label.text = "Downloading... " + Regex.Match(line, @"[\d\.]+%");
 				}
 			},
 			(line) => {
@@ -94,14 +97,18 @@ public class VideoDownloader {
 			(proc) => {
 				if (proc.ExitCode == 0) {
 					Plugin.Trace($"Download successful!");
+					download_label.text = "Done!";
 					Plugin.map_config!.TryVideo();
 					Plugin.controller!.LoadVideo();
 				}
 				else {
+					download_label.text = "Download failed!";
 					Debug.LogError("Download failed!");
 				}
 			}
 		);
+		
+		download_label.text = "Downloading...";
 	}
 	
 	private static void Run(string cmd, string args, Action<string>? outputCallback = null, Action<string>? errorCallback = null, Action<System.Diagnostics.Process>? exitCallback = null) {

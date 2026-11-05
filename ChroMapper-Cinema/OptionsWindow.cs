@@ -3,6 +3,7 @@ using System.IO;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
+using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UI;
@@ -17,6 +18,7 @@ namespace ChroMapper_Cinema {
 
 internal class OptionsWindow : UIWindow {
 	public UIButton? toggle_visibility;
+	public TextMeshProUGUI? download_label;
 	private bool should_refresh = true;
 	
 	public static OptionsWindow InitProxy(MapEditorUI mapEditorUI) {
@@ -51,7 +53,9 @@ internal class OptionsWindow : UIWindow {
 		MakeTextbox("Video ID", "videoID", "The YouTube video ID from the part after the &v= in the URL");
 		MakeTextbox("Video URL", "videoUrl", "Use this parameter instead of videoID if you want to use a video hoster other than YouTube.");
 		{
-			var line = MakeEmpty("Download");
+			var line = MakeLine("Download");
+			download_label = line.GetComponentInChildren<TextMeshProUGUI>();
+			download_label.text = "";
 			var download = UI.AddButton(line, "Download", () => {
 				var url = (Plugin.map_config!.cinema_video.HasKey("videoUrl"))
 					? (string)Plugin.map_config!["videoUrl"]
