@@ -1,7 +1,6 @@
 using System.IO;
 using System.Reflection;
 using UnityEngine;
-using UnityEngine.Video;
 using SimpleJSON;
 
 namespace ChroMapper_Cinema {
@@ -13,18 +12,18 @@ public class CinemaController {
 	
 	private AudioTimeSyncController? atsc = null;
 	
+	public MainThreadRunner? mtr { get; private set; }
+	
 	public bool showPlayer = false;
 	private GameObject? screen;
-	private GStreamerVideoComponent? player;
+	private BiVideoPlayer? player;
 	private string platform = "";
 	private PlatformSettings plat_settings;
 	
 	private float offset;
 	private bool playing;
 	
-	public CinemaController() {
-		
-	}
+	public CinemaController() { }
 	
 	public void Init(GameObject platform) {
 		Plugin.Trace($"CinemaController.Init({platform})");
@@ -32,6 +31,11 @@ public class CinemaController {
 		
 		this.platform = BeatSaberSongContainer.Instance.Info.EnvironmentName;
 		Plugin.Trace($"Platform: {this.platform}");
+		
+		if (mtr != null) {
+			GameObject.Destroy(mtr.gameObject);
+		}
+		mtr = new GameObject("MainThreadRunner").AddComponent<MainThreadRunner>();
 		
 		if (screen != null) {
 			GameObject.Destroy(screen);
@@ -53,7 +57,25 @@ public class CinemaController {
 		mat.SetFloat("_ColorMask", 14.0f); // No idea what this means but it looks fine
 		screen.AddComponent<MeshRenderer>().material = mat;
 		
-		player = screen.AddComponent<GStreamerVideoComponent>();
+		player = screen.AddComponent<BiVideoPlayer>();
+		player.OnError.AddListener((string msg) => {
+			showPlayer = false;
+			screen.SetActive(false);
+			TryRefreshWindow();
+			throw new System.Exception(msg);
+		});
+		player.OnReady.AddListener(() => {
+			Plugin.Trace("Video prepared! Show player!");
+			var scale = new Vector2(plat_settings.height / player.Height * player.Width, plat_settings.height);
+			Utils.SetTransform(screen, plat_settings.pos * 1.667f, scale * 1.667f, plat_settings.rotation);
+			
+			showPlayer = true;
+			playing = false;
+			
+			TryRefreshWindow();
+			
+			OnTimeChanged();
+		});
 		
 #if CHROMPER_13
 		atsc.TimeChanged += OnTimeChanged;
@@ -72,11 +94,13 @@ public class CinemaController {
 	}
 	
 	public string LoadVideo() {
+		Plugin.Trace("LoadVideo");
 		var cinema_info = Plugin.map_config!.cinema_video;
 		
 		TryRefreshWindow();
 		
 		if (!Plugin.map_config.config_exists) {
+			Plugin.Trace("No config, no video");
 			return "";
 		}
 		
@@ -97,24 +121,14 @@ public class CinemaController {
 			showPlayer = false;
 			screen!.SetActive(false);
 			TryRefreshWindow();
+			Plugin.Trace("Video file not downloaded");
 			return Utils.Error("Video file not downloaded!");
 		}
 		
 		screen!.SetActive(true);
 		
-		player!.VideoPath = Plugin.map_config!.video_file!;
-		player!.Open();
-		player.Player!.OnResize.AddListener(() => {
-			var scale = new Vector2(plat_settings.height / player.Player!.Height * player.Player!.Width, plat_settings.height);
-			Utils.SetTransform(screen, plat_settings.pos * 1.667f, scale * 1.667f, plat_settings.rotation);
-			
-			showPlayer = true;
-			playing = false;
-			
-			TryRefreshWindow();
-			
-			OnTimeChanged();
-		});
+		Plugin.Trace($"Load video: {Plugin.map_config!.video_file!}");
+		player!.Open(Plugin.map_config!.video_file!);
 		
 		return "";
 	}
@@ -155,7 +169,7 @@ public class CinemaController {
 	
 	public void ToggleEnabled() {
 		if (showPlayer) {
-			player!.Player!.Pause();
+			player!.Pause();
 			screen!.SetActive(false);
 			showPlayer = false;
 			TryRefreshWindow();

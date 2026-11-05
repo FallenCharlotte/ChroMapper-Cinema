@@ -114,14 +114,14 @@ public class VideoDownloader {
 		p.EnableRaisingEvents = (exitCallback != null);
 		if (outputCallback != null) p.OutputDataReceived += (_, line) => {
 			if (String.IsNullOrWhiteSpace(line.Data)) return;
-			outputCallback(line.Data);
+			Plugin.controller!.mtr?.Run(() => outputCallback(line.Data));
 		};
 		if (errorCallback != null) p.ErrorDataReceived += (_, line) => {
 			if (String.IsNullOrWhiteSpace(line.Data)) return;
-			errorCallback(line.Data);
+			Plugin.controller!.mtr?.Run(() => errorCallback(line.Data));
 		};
 		if (exitCallback != null) p.Exited += (sender, _) => {
-			exitCallback((System.Diagnostics.Process)sender);
+			Plugin.controller!.mtr?.Run(() => exitCallback((System.Diagnostics.Process)sender));
 		};
 		p.Start();
 		if (outputCallback != null) p.BeginOutputReadLine();
