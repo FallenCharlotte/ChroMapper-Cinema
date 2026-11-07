@@ -6,6 +6,7 @@
 #include <math.h>
 #include <string.h>
 
+// From https://gstreamer.freedesktop.org/documentation/playback/playsink.html#named-constants
 #define PLAY_VIDEO (1u << 0)
 #define PLAY_AUDIO (1u << 1)
 #define PLAY_SOFT_VOLUME (1u << 4)
@@ -26,7 +27,7 @@ struct cmv_gst_player {
     cmv_gst_frame frame;
     gint64 requested_ns, position_ns;
     gboolean desired_playing, muted, at_eos;
-    double rate, volume;
+    double rate, volume, panning;
     guint64 generation, completed_generation;
     guint32 expected_seqnum, segment_seqnum;
     guint64 expected_generation, segment_generation, preroll_generation;
@@ -34,6 +35,7 @@ struct cmv_gst_player {
     gboolean allow_publish, have_video_info;
     GstVideoInfo video_info;
     GstElement *pipeline;
+    GstElement *audio_filter;
     GstAppSink *sink;
     GstPad *sink_pad;
     gulong probe_id, setup_handler;
@@ -371,7 +373,8 @@ static gboolean build_pipeline(cmv_gst_player *p)
     g_free(description);
     if (!bin || parse_error) {
         fail(p, parse_error ? parse_error->message : "Unable to build the RGBA video sink.");
-        g_clear_error(&parse_error); if (bin) gst_object_unref(bin); return FALSE;
+        g_clear_error(&parse_error); if (bin) gst_object_unref(bin);
+        return FALSE;
     }
     gst_object_ref_sink(bin);
     p->sink = GST_APP_SINK(gst_bin_get_by_name(GST_BIN(bin), "cmv_frames"));
@@ -386,8 +389,16 @@ static gboolean build_pipeline(cmv_gst_player *p)
     g_free(absolute);
     if (!uri) { fail(p, parse_error->message); g_clear_error(&parse_error); gst_object_unref(bin); return FALSE; }
     guint flags = PLAY_VIDEO | PLAY_SOFTWARE_DECODERS;
-    if (p->audio_mode == CMV_GST_AUDIO_DIRECT) flags |= PLAY_AUDIO | PLAY_SOFT_VOLUME;
-    g_object_set(p->pipeline, "uri", uri, "video-sink", bin, "flags", flags, NULL);
+    GstElement *audio_filter = NULL;
+    if (p->audio_mode == CMV_GST_AUDIO_DIRECT) {
+        flags |= PLAY_AUDIO | PLAY_SOFT_VOLUME;
+        audio_filter = gst_element_factory_make_full("audiopanorama", NULL);
+        if (!audio_filter) {
+            fail(p, "Unable to build the audio filter.");
+        }
+    }
+    p->audio_filter = audio_filter;
+    g_object_set(p->pipeline, "uri", uri, "audio-filter", audio_filter, "video-sink", bin, "flags", flags, NULL);
     g_free(uri); gst_object_unref(bin);
     p->bus = gst_element_get_bus(p->pipeline);
     return TRUE;
@@ -427,7 +438,7 @@ static gpointer control_worker(gpointer user_data)
     GstState target = GST_STATE_NULL;
     guint64 sent_generation = 0;
     gboolean prepared = FALSE;
-    double applied_volume = -1; int applied_mute = -1;
+    double applied_volume = -1, applied_panning = NAN; int applied_mute = -1;
     if (!build_pipeline(p)) goto cleanup;
     if (!request_state(p, GST_STATE_PAUSED, &target)) goto cleanup;
     for (;;) {
@@ -437,12 +448,16 @@ static gpointer control_worker(gpointer user_data)
         guint64 generation = p->generation;
         gint64 position = p->requested_ns;
         gboolean playing = p->desired_playing, muted = p->muted;
-        double rate = p->rate, volume = p->volume;
+        double rate = p->rate, volume = p->volume, panning = p->panning;
         g_mutex_unlock(&p->lock);
         if (stop) break;
-        if (volume != applied_volume || muted != applied_mute) {
+        if (!isnan(volume) && (volume != applied_volume || muted != applied_mute)) {
             g_object_set(p->pipeline, "volume", volume, "mute", muted, NULL);
             applied_volume = volume; applied_mute = muted;
+        }
+        if (panning != applied_panning) {
+            g_object_set(p->audio_filter, "panorama", panning, NULL);
+            applied_panning = panning;
         }
         GstState actual, pending;
         GstStateChangeReturn state_result = gst_element_get_state(p->pipeline, &actual, &pending, 0);
@@ -537,7 +552,7 @@ int32_t cmv_gst_create(const char *path,
     g_mutex_init(&p->lock); g_cond_init(&p->wake);
     p->path = g_strdup(path); p->audio_mode = audio_mode;
     p->width = p->height = 0;
-    p->rate = 1; p->volume = 1; p->generation = 1;
+    p->rate = 1; p->volume = NAN; p->panning = 0; p->generation = 1;
     p->snapshot.state = CMV_GST_OPENING;
     GError *thread_error = NULL;
     p->worker = g_thread_try_new("cmv-gstreamer", control_worker, p, &thread_error);
@@ -602,6 +617,15 @@ int32_t cmv_gst_set_volume(cmv_gst_player *p, double volume)
     if (!isfinite(volume) || volume < 0 || volume > 1) { fail(p, "Video volume must be between zero and one."); return 0; }
     g_mutex_lock(&p->lock); gboolean accepted = accept_locked(p);
     if (accepted) { p->volume = volume; g_cond_signal(&p->wake); }
+    g_mutex_unlock(&p->lock); return accepted;
+}
+
+int32_t cmv_gst_set_panning(cmv_gst_player *p, double panning)
+{
+    if (!p) return 0;
+    if (!isfinite(panning) || panning < -1 || panning > 1) { fail(p, "Audio panning must be between negative one and one."); return 0; }
+    g_mutex_lock(&p->lock); gboolean accepted = accept_locked(p);
+    if (accepted) { p->panning = panning; g_cond_signal(&p->wake); }
     g_mutex_unlock(&p->lock); return accepted;
 }
 

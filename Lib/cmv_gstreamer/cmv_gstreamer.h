@@ -79,6 +79,7 @@ CMV_GST_API uint64_t cmv_gst_seek_ns(cmv_gst_player *player, int64_t time_ns);
 CMV_GST_API int32_t cmv_gst_set_rate(cmv_gst_player *player, double rate);
 /* Volume is linear [0,1]. None audio mode never enables an audio stream. */
 CMV_GST_API int32_t cmv_gst_set_volume(cmv_gst_player *player, double volume);
+CMV_GST_API int32_t cmv_gst_set_panning(cmv_gst_player *player, double panning);
 CMV_GST_API int32_t cmv_gst_set_muted(cmv_gst_player *player, int32_t muted);
 CMV_GST_API int32_t cmv_gst_get_snapshot(cmv_gst_player *player,
     cmv_gst_snapshot *snapshot);

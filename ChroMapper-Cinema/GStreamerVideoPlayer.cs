@@ -28,7 +28,8 @@ public sealed class GStreamerVideoPlayer : IDisposable
     private IntPtr pixels;
     private IntPtr player;
     private ulong uploadedSerial;
-    private float volume = float.NaN;
+    private double volume = float.NaN;
+    private double panning = float.NaN;
 
     public GStreamerVideoPlayer(string path, bool isSrgb, bool enableAudio)
     {
@@ -161,13 +162,22 @@ public sealed class GStreamerVideoPlayer : IDisposable
         muted = value;
     }
 
-    public void SetVolume(float value)
+    public void SetVolume(double value)
     {
         ThrowIfDisposed();
-        if (value is < 0 or > 1 || float.IsNaN(value)) throw new ArgumentOutOfRangeException(nameof(value));
+        if (value is < 0 or > 1 || double.IsNaN(value)) throw new ArgumentOutOfRangeException(nameof(value));
         if (volume == value) return;
         cmv_gst_set_volume(player, value);
         volume = value;
+    }
+    
+    public void SetPanning(double value)
+    {
+        ThrowIfDisposed();
+        if (value is < -1 or > 1 || double.IsNaN(value)) throw new ArgumentOutOfRangeException(nameof(value));
+        if (panning == value) return;
+        cmv_gst_set_panning(player, value);
+        panning = value;
     }
     
     public bool Resize() {
@@ -255,6 +265,9 @@ public sealed class GStreamerVideoPlayer : IDisposable
 
     [DllImport(Library, CallingConvention = CallingConvention.Cdecl)]
     private static extern int cmv_gst_set_volume(IntPtr player, double volume);
+    
+    [DllImport(Library, CallingConvention = CallingConvention.Cdecl)]
+    private static extern int cmv_gst_set_panning(IntPtr player, double panning);
 
     [DllImport(Library, CallingConvention = CallingConvention.Cdecl)]
     private static extern int cmv_gst_set_muted(IntPtr player, int muted);
