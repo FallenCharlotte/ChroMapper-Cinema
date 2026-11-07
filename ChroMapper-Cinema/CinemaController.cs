@@ -16,7 +16,7 @@ public class CinemaController {
 	
 	public bool showPlayer = false;
 	private GameObject? screen;
-	private BiVideoPlayer? player;
+	public BiVideoPlayer? player;
 	private string platform = "";
 	private PlatformSettings plat_settings;
 	
@@ -71,6 +71,9 @@ public class CinemaController {
 			
 			showPlayer = true;
 			playing = false;
+			
+			player.SetPanning(-1.0f);
+			player.SetVolume(Settings.Instance.SongVolume);
 			
 			TryRefreshWindow();
 			
@@ -129,6 +132,8 @@ public class CinemaController {
 		
 		Plugin.Trace($"Load video: {Plugin.map_config!.video_file!}");
 		player!.Open(Plugin.map_config!.video_file!);
+		
+		player!.SetMuted(true);
 		
 		return "";
 	}
@@ -193,6 +198,7 @@ public class CinemaController {
 		}
 		
 		if (atsc.IsPlaying && !playing && time >= 0) {
+			player!.Seek(System.Math.Max(0, time));
 			player!.Play();
 			playing = true;
 		}
@@ -200,6 +206,7 @@ public class CinemaController {
 		if (!atsc.IsPlaying && playing) {
 			player!.Pause();
 			playing = false;
+			player!.Seek(System.Math.Max(0, time));
 		}
 	}
 	

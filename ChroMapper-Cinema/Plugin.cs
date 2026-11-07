@@ -43,7 +43,14 @@ public class Plugin {
 		if (scene.buildIndex == 3) {
 			var context = Resources.FindObjectsOfTypeAll<BeatmapRuntimeContext>().FirstOrDefault();
 			
-			context.OnEnvironmentLoaded += (d) => PlatformLoaded(d.gameObject);
+			bool first = true;
+			
+			context.OnEnvironmentLoaded += (d) => {
+				if (first) {
+					PlatformLoaded(d.gameObject);
+				}
+				first = false;
+			};
 		}
 	}
 #endif

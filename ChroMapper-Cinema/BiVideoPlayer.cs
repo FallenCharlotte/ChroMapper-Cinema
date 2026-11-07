@@ -8,7 +8,6 @@ namespace ChroMapper_Cinema {
 // Bisexual video player, chooses GStreamer or Unity VideoPlayer backend
 [RequireComponent(typeof(MeshRenderer))]
 public class BiVideoPlayer : MonoBehaviour {
-	public bool EnableAudio;
 	public readonly UnityEvent OnReady = new();
 	public readonly UnityEvent<string> OnError = new();
 	

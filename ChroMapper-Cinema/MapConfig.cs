@@ -2,6 +2,8 @@ using System.IO;
 using UnityEngine;
 using SimpleJSON;
 
+using ChroMapper_PropEdit.Utils;
+
 namespace ChroMapper_Cinema {
 
 public class MapConfig {
@@ -73,12 +75,17 @@ public class MapConfig {
 		Plugin.Trace($"video_downloaded: {video_downloaded}");
 	}
 	
-	public JSONNode this[string key] {
+	public JSONNode? this[string key] {
 		get {
-			return cinema_video[key];
+			return Data.GetNode(cinema_video, key) ?? cinema_video[key];
 		}
 		set {
-			cinema_video[key] = value;
+			if (value is JSONNode n) {
+				Data.SetNode(cinema_video, key, value);
+			}
+			else {
+				Data.RemoveNode(cinema_video, key);
+			}
 			Save();
 		}
 	}

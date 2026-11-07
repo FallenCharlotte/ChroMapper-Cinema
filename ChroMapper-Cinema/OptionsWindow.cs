@@ -20,6 +20,7 @@ internal class OptionsWindow : UIWindow {
 	public UIButton? toggle_visibility;
 	public TextMeshProUGUI? download_label;
 	private bool should_refresh = true;
+	private bool previewing_audio = false;
 	
 	public static OptionsWindow InitProxy(MapEditorUI mapEditorUI) {
 		return UIWindow.Create<OptionsWindow>(mapEditorUI);
@@ -72,6 +73,34 @@ internal class OptionsWindow : UIWindow {
 		MakeTextbox("Video File", "videoFile", "Name of the video file on the local file system.");
 		MakeParsed<int>("Duration", "duration", "Video duration in seconds. Will be shown to the user, but has no other function than that.");
 		MakeParsed<int>("Offset", "offset", "Video duration in seconds. The offset in milliseconds to align the video with the map.");
+		{
+			var line = MakeLine("Offset Control");
+			UI.AttachTransform(UI.AddButton(line, "-500", () => {
+				Plugin.map_config!["offset"] -= 500;
+			}).gameObject, new Vector2(0, 0), new Vector2(0, 0), new Vector2(0.5f, 0), new Vector2(0.625f, 1));
+			UI.AttachTransform(UI.AddButton(line, "-50", () => {
+				Plugin.map_config!["offset"] -= 50;
+			}).gameObject, new Vector2(0, 0), new Vector2(0, 0), new Vector2(0.625f, 0), new Vector2(0.75f, 1));
+			UI.AttachTransform(UI.AddButton(line, "+50", () => {
+				Plugin.map_config!["offset"] += 50;
+			}).gameObject, new Vector2(0, 0), new Vector2(0, 0), new Vector2(0.75f, 0), new Vector2(0.875f, 1));
+			UI.AttachTransform(UI.AddButton(line, "+500", () => {
+				Plugin.map_config!["offset"] += 500;
+			}).gameObject, new Vector2(0, 0), new Vector2(0, 0), new Vector2(0.875f, 0), new Vector2(1, 1));
+		}
+		{
+			var line = MakeLine("Preview audio", null, "Plays in the left ear. The audio timing isn't always perfectly consistent, but should be within about 50ms.");
+			
+			var accessor = new Accessor<bool>(
+				() => previewing_audio,
+				(v) => {
+					Plugin.controller!.player?.SetMuted(!v);
+					previewing_audio = v;
+				}
+			);
+			
+			UI.AddCheckbox(line, accessor.Get(), accessor.Set);
+		}
 		MakeCheckbox("Config By Mapper", "configByMapper", false, "Whether the config was created by the mapper.");
 		
 		MakeEmpty("Spacer");
@@ -117,11 +146,13 @@ internal class OptionsWindow : UIWindow {
 		toggle_visibility!.SetImage(Utils.LoadSprite(Plugin.controller!.showPlayer
 			? "ChroMapper_Cinema.Resources.eye.png"
 			: "ChroMapper_Cinema.Resources.eye-slash.png"));
+		
+		UI.RefreshTooltips(panel);
 	}
 	
 	private GameObject MakeLine(string name, Vector2? size = null, string tooltip = "") {
 		return current_panel!.transform.Find(name)?.gameObject
-			?? UI.AddField(current_panel!, name, null);
+			?? UI.AddField(current_panel!, name, null, tooltip);
 	}
 	
 	private GameObject MakeEmpty(string name) {
@@ -182,15 +213,8 @@ internal class OptionsWindow : UIWindow {
 	
 	private Accessor<JSONNode?> ConfigField(string key)
 		=> new(
-			() => Data.GetNode(Plugin.map_config!.cinema_video, key),
-			(v) => {
-				if (v is JSONNode n) {
-					Data.SetNode(Plugin.map_config!.cinema_video, key, n);
-				}
-				else {
-					Data.RemoveNode(Plugin.map_config!.cinema_video, key);
-				}
-			}
+			() => Plugin.map_config![key],
+			(v) => Plugin.map_config![key] = v
 		);
 	
 	private Accessor<T?> ConfigField<T>(string key)
