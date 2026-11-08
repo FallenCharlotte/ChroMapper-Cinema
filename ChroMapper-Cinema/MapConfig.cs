@@ -30,6 +30,7 @@ public class MapConfig {
 		if (!File.Exists(cinema_file)) {
 			cinema_video = new JSONObject();
 			config_exists = false;
+			cinema_file = null;
 			return;
 		}
 		
@@ -63,13 +64,19 @@ public class MapConfig {
 		video_file = Path.Combine(video_dir, (string)cinema_video["videoFile"]);
 		
 		Plugin.Trace($"{video_file} eixsts? {File.Exists(video_file)}");
-		if (!File.Exists(video_file)) {
+		if (!File.Exists(video_file)) do {
 			var old_location = Path.Combine(map_dir, (string)cinema_video["videoFile"]);
 			if (File.Exists(old_location)) {
 				Debug.LogWarning("Cinema video file found in old location!");
 				video_file = old_location;
+				break;
 			}
-		}
+			var theater_location = Path.Combine(Settings.Instance.BeatSaberInstallation, "Beat Saber_Data", "CustomLevels", "TheaterOSTVideos", (string)cinema_video["videoFile"]);
+			if (File.Exists(theater_location)) {
+				video_file = theater_location;
+				break;
+			}
+		} while (false);
 		
 		video_downloaded = File.Exists(video_file);
 		Plugin.Trace($"video_downloaded: {video_downloaded}");
