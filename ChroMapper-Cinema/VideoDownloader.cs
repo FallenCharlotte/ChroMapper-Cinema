@@ -99,7 +99,7 @@ public class VideoDownloader {
 					Plugin.Trace($"Download successful!");
 					download_label.text = "Done!";
 					Plugin.map_config!.TryVideo();
-					Plugin.controller!.LoadVideo();
+					Plugin.controller!.AutoLoad();
 				}
 				else {
 					download_label.text = "Download failed!";

@@ -50,7 +50,7 @@ public class MapConfig {
 		config_exists = true;
 		
 		TryVideo();
-		Plugin.controller!.LoadVideo();
+		Plugin.controller!.AutoLoad();
 	}
 	
 	public void TryVideo() {
@@ -77,7 +77,7 @@ public class MapConfig {
 	
 	public JSONNode? this[string key] {
 		get {
-			return GetNode(cinema_video, key) ?? cinema_video[key];
+			return GetNode(cinema_video, key);
 		}
 		set {
 			if (value is JSONNode n) {

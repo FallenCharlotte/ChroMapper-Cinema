@@ -120,7 +120,7 @@ internal class OptionsWindow : UIWindow {
 			
 			UI.AddCheckbox(line, accessor.Get(), accessor.Set);
 		}
-		MakeCheckbox("Config By Mapper", "configByMapper", false, "Whether the config was created by the mapper.");
+		MakeCheckbox("Config By Mapper", "configByMapper", "Whether the config was created by the mapper.");
 		
 		MakeEmpty("Spacer");
 		
@@ -128,7 +128,7 @@ internal class OptionsWindow : UIWindow {
 			// TODO: Dropdown
 			MakeTextbox("Environment", "environmentName", "Force a specific environment that is only used if the user has Cinema installed and the video downloaded.");
 			MakeParsed<float>("Playback Speed", "playbackSpeed", "Adjust the playback speed of the video.");
-			MakeCheckbox("Loop", "loop", false, "Whether the video should loop if it ends before the map does.");
+			MakeCheckbox("Loop", "loop", "Whether the video should loop if it ends before the map does.");
 			MakeParsed<float>("End Video At", "endVideoAt", "Video time, in seconds, to end at. The video will fade out for one second prior.");
 			MakeVector3("Screen Position", "screenPosition", "Custom screen position. This setting prevents the user from overriding the environment.");
 			MakeVector3("Screen Rotation", "screenRotation", "Rotates the screen.");
@@ -136,9 +136,9 @@ internal class OptionsWindow : UIWindow {
 			MakeParsed<float>("Screen Curvature", "screenCurvature", "Force a specific curvature of the screen in degrees. (0-180)");
 			MakeParsed<int>("Screen Subsurfaces", "screenSubsurfaces", "Sets how many sub-surfaces the curved screen uses, changing the smoothness of the curvature. (1-256)");
 			MakeDropdown("Allow Custom Platform", "allowCustomPlatform", MapSettings.OptionBool, true, "When set to false, will prevent the CustomPlatforms mod from loading a custom platform for this map if the video is playing.");
-			MakeCheckbox("Disable Default Modifications", "disableDefaultModifications", false, "If set to true, will disable any environment modifications Cinema does by default for the selected environment.");
-			MakeCheckbox("Force Environment Modifications", "forceEnvironmentModifications", false, "Set this to true to have your environment modifications applied even if no video is defined or downloaded by the user.");
-			MakeCheckbox("Merge Prop Groups", "mergePropGroups", false, "If this is set to true, all cloned lights will be merged with existing prop groups, based on the specified z-position.");
+			MakeCheckbox("Disable Default Modifications", "disableDefaultModifications", "If set to true, will disable any environment modifications Cinema does by default for the selected environment.");
+			MakeCheckbox("Force Environment Modifications", "forceEnvironmentModifications", "Set this to true to have your environment modifications applied even if no video is defined or downloaded by the user.");
+			MakeCheckbox("Merge Prop Groups", "mergePropGroups", "If this is set to true, all cloned lights will be merged with existing prop groups, based on the specified z-position.");
 			MakeDropdown("Transparency", "transparency", MapSettings.OptionBool, true, "Override the user's choice and force transparency to be enabled or disabled.");
 			MakeParsed<float>("Bloom", "bloom", "Sets the amount of bloom (glow) that appears around the video player during brightly colored parts of the video.");
 		} panels.Pop();
@@ -156,6 +156,10 @@ internal class OptionsWindow : UIWindow {
 			MakeDropdown("Type", "vignette.type", VignetteTypes, true, "Changes how the radius and softness parameters behave.");
 			MakeParsed<float>("Radius", "vignette.radius", "Valid range: 0 to 1.\nIf the type is \"elliptical\", the screen is only really elliptical if the radius is set to 0. Values above that simply round the corners of the screen to varying degrees.");
 			MakeParsed<float>("Softness", "vignette.softness", "Valid range: 0 to 1. Defines the sharpness of the cutout.");
+		} panels.Pop();
+		
+		Expando("plugin", "Plugin Settings", false); {
+			MakeCheckbox("Hide player automatically", "CM_autoHide", "Hide the video automatically on load. Per-map setting");
 		} panels.Pop();
 		
 		// TODO: Additional Screens
@@ -182,7 +186,7 @@ internal class OptionsWindow : UIWindow {
 		return obj;
 	}
 	
-	private Toggle MakeCheckbox(string label, string key, bool _default, string tooltip = "") {
+	private Toggle MakeCheckbox(string label, string key, string tooltip = "") {
 		var line = MakeLine(label, null, tooltip);
 		
 		var accessor = ConfigField<bool>(key);

@@ -93,11 +93,17 @@ public class CinemaController {
 		}
 		
 		Plugin.map_config!.Load();
-		LoadVideo();
+		AutoLoad();
+	}
+	
+	// Load and show video if enabled
+	public void AutoLoad() {
+		if (!(Plugin.map_config!["CM_autoHide"] ?? false)) {
+			LoadVideo();
+		}
 	}
 	
 	public string LoadVideo() {
-		Plugin.Trace("LoadVideo");
 		var cinema_info = Plugin.map_config!.cinema_video;
 		
 		TryRefreshWindow();
