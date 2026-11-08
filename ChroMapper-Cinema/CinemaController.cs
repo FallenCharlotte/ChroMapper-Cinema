@@ -104,6 +104,7 @@ public class CinemaController {
 		
 		if (!Plugin.map_config.config_exists) {
 			Plugin.Trace("No config, no video");
+			screen!.SetActive(false);
 			return "";
 		}
 		
@@ -198,7 +199,6 @@ public class CinemaController {
 		}
 		
 		if (atsc.IsPlaying && !playing && time >= 0) {
-			player!.Seek(System.Math.Max(0, time));
 			player!.Play();
 			playing = true;
 		}

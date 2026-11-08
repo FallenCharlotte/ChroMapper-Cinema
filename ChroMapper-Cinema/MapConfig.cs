@@ -2,8 +2,6 @@ using System.IO;
 using UnityEngine;
 using SimpleJSON;
 
-using ChroMapper_PropEdit.Utils;
-
 namespace ChroMapper_Cinema {
 
 public class MapConfig {
@@ -49,6 +47,8 @@ public class MapConfig {
 		writer.Write(cinema_video.ToString(4));
 		writer.Close();
 		
+		config_exists = true;
+		
 		TryVideo();
 		Plugin.controller!.LoadVideo();
 	}
@@ -77,17 +77,52 @@ public class MapConfig {
 	
 	public JSONNode? this[string key] {
 		get {
-			return Data.GetNode(cinema_video, key) ?? cinema_video[key];
+			return GetNode(cinema_video, key) ?? cinema_video[key];
 		}
 		set {
 			if (value is JSONNode n) {
-				Data.SetNode(cinema_video, key, value);
+				SetNode(cinema_video, key, value);
 			}
 			else {
-				Data.RemoveNode(cinema_video, key);
+				RemoveNode(cinema_video, key);
 			}
 			Save();
 		}
+	}
+	
+	private static JSONNode? GetNode(JSONNode root, string name) {
+		string[] path = name.Split('.');
+		foreach (string node in path) {
+			if (!(root?.HasKey(node) ?? false)) {
+				return null;
+			}
+			root = root[node];
+		}
+		return root;
+	}
+	
+	private static JSONNode? SetNode(JSONNode root, string name, JSONNode? o) {
+		if (o == null) {
+			RemoveNode(root, name);
+			return o;
+		}
+		string[] path = name.Split('.');
+		for (int i = 0; i < path.Length - 1; ++i) {
+			root = root[path[i]];
+		}
+		root[path[path.Length-1]] = o;
+		return o;
+	}
+	
+	private static void RemoveNode(JSONNode root, string name) {
+		string[] path = name.Split('.');
+		for (int i = 0; i < path.Length - 1; ++i) {
+			if (!(root?.HasKey(path[i]) ?? false)) {
+				return;
+			}
+			root = root[path[i]];
+		}
+		root?.Remove(path[path.Length - 1]);
 	}
 };
 

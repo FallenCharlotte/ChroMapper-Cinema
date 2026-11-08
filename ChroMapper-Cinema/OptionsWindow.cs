@@ -37,6 +37,25 @@ internal class OptionsWindow : UIWindow {
 			var tooltip = toggle_visibility.gameObject.AddComponent<Tooltip>();
 			tooltip.TooltipOverride = "Toggle Screen Visibility";
 		}
+		{
+			var delete_config = UI.AddButton(window!.title!, UI.GetSprite("mapping-delete"), () => {
+				if (Plugin.map_config!.config_exists) {
+					PersistentUI.Instance.ShowDialogBox("Delete cinema-video.json?", (i) => {
+						if (i == 0) {
+							File.Delete(Plugin.map_config!.cinema_file);
+							Plugin.map_config!.Load();
+							Plugin.controller!.LoadVideo();
+						}
+					}, PersistentUI.DialogBoxPresetType.OkCancel);
+				}
+				else {
+					PersistentUI.Instance.ShowDialogBox("No cinema-video.json file!", null, PersistentUI.DialogBoxPresetType.Ok);
+				}
+			});
+			UI.AttachTransform(delete_config.gameObject, pos: new Vector2(-55, -14), size: new Vector2(30, 30), anchor_min: new Vector2(1, 1), anchor_max: new Vector2(1, 1));
+			var tooltip = delete_config.gameObject.AddComponent<Tooltip>();
+			tooltip.TooltipOverride = "Delete cinema-video.json";
+		}
 	}
 	
 	public void TriggerRefresh() {
